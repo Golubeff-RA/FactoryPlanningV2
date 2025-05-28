@@ -44,7 +44,7 @@ public:
         return true;
     }
 
-    bool SetWorkPtr(Work* work) { ptr_to_work = work; }
+    void SetWorkPtr(Work* work) { ptr_to_work = work; }
 
     StEndTimes GetStEndTimes() { return {start_time_, end_time_}; }
 
