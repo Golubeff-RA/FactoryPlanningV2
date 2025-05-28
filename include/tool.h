@@ -25,10 +25,8 @@ public:
                 ++it;
                 stamp = it->start();
             }
-
             return time >= span;
         }
-
         return it->GetTimeSpan(stamp) >= span;
     }
 

@@ -23,16 +23,12 @@ public:
 
     bool HasDependencies() { return cnt_deps_ == 0; }
 
-    bool Appointed() {
-        return start_time_ != START_TIME_POINT && end_time_ != START_TIME_POINT;
+    bool Appointed() const {
+        return start_time_ != START_TIME_POINT || end_time_ != START_TIME_POINT;
     }
 
     bool SetTimes(TimePoint start, TimePoint end, Duration span,
                   std::vector<Operation>& all_operations) {
-        if (start > end || end - start < span) {
-            return false;
-        }
-
         start_time_ = start;
         end_time_ = end;
 
@@ -44,13 +40,13 @@ public:
         return true;
     }
 
-    void SetWorkPtr(Work* work) { ptr_to_work = work; }
+    void SetWorkPtr(Work* work) { ptr_to_work_ = work; }
 
-    StEndTimes GetStEndTimes() { return {start_time_, end_time_}; }
+    StEndTimes GetStEndTimes() const { return {start_time_, end_time_}; }
 
-    bool CanBeAppointed(TimePoint stamp) {
+    bool CanBeAppointed(TimePoint stamp) const {
         return !Appointed() && cnt_deps_ == 0 && stamp > possible_start &&
-               stamp > ptr_to_work->start_time();
+               stamp > ptr_to_work_->start_time();
     }
 
     bool DelDependency(size_t dep_id, TimePoint dep_end) {
@@ -66,15 +62,27 @@ public:
         return stoppable_;
     }
 
+    const IdsSet& possible_tools() const {
+        return possible_tools_;
+    }
+
     size_t id() const {
         return id_;
     }
 
+    size_t cnt_deps() const {
+        return cnt_deps_;
+    }
+
+    const Work* ptr_to_work() const {
+        return ptr_to_work_;
+    }
+
 private:
-    Work* ptr_to_work = nullptr;
+    Work* ptr_to_work_ = nullptr;
     size_t id_;       // номер операции
     bool stoppable_;  // прерываемость
-    size_t cnt_deps_;  // число неназначенных родителей
+    size_t cnt_deps_ = 0;  // число неназначенных родителей
     IdsSet depended_;      // множество зависимых от неё
     IdsSet dependencies_;  // множество зависимостей
     IdsSet possible_tools_;  // множество возможных исполнителей

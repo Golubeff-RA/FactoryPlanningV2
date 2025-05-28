@@ -6,6 +6,7 @@
 
 #include "printer.h"
 #include "problem_data.h"
+#include "solver.h"
 
 using namespace std::chrono_literals;
 
@@ -18,7 +19,6 @@ void WriteTestData() {
     size_t cnt_tools = rand() % 20;
     size_t cnt_operations = rand() % 40;
     out << "TOOLS\n" << cnt_tools << std::endl;
-    
 
     for (size_t i = 0; i < cnt_tools; ++i) {
         out << "i";
@@ -63,8 +63,15 @@ void WriteTestData() {
     out.close();
 }
 
-int main() { 
+int main() {
     std::ifstream input("../test_data/test.txt");
     ProblemData data(input);
-    return 0; 
+    /*for (const auto& operation : data.operations) {
+        std::cout << operation.cnt_deps() << " " << operation.ptr_to_work()<< "\n";
+    }*/
+    Printer::PrintShedules(data);
+    Solver::Solve(data);
+    Printer::PrintGants(data);
+    Printer::PrintOperations(data);
+    return 0;
 }

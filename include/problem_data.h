@@ -4,7 +4,7 @@
 #include <string>
 
 #include "operation.h"
-#include "printer.h"
+//#include "printer.h"
 #include "tool.h"
 #include "work.h"
 
@@ -74,9 +74,10 @@ ProblemData::ProblemData(std::ifstream& input) {
         }
     }
 
-    for (Work& work : works) {
-        for (size_t op_id : work.operation_ids()) {
-            operations[op_id].SetWorkPtr(&work);
+    for (size_t i = 0; i < works.size(); ++i) {
+        //std::cout << &(works[i]) << std::endl;
+        for (size_t op_id : works[i].operation_ids()) {
+            operations[op_id].SetWorkPtr(&(works[i]));
         }
     }
 }
@@ -109,7 +110,7 @@ Tool ProblemData::ParseTool(std::ifstream& input, size_t idx) {
 
     for (size_t i = 0; i + 1 < time_strs.size(); i += 2) {
         const std::string& start_str = time_strs[i];
-        const std::string& end_str = time_strs[i];
+        const std::string& end_str = time_strs[i + 1];
         TimePoint start = ParseTimePoint(start_str);
         TimePoint end = ParseTimePoint(end_str);
         shedule.insert({start, end});
@@ -132,13 +133,14 @@ void ProblemData::FillOperations(std::ifstream& input) {
 }
 
 void ProblemData::FillTimes(std::ifstream& input) {
+    times_matrix.resize(operations.size());
     for (size_t i = 0; i < operations.size() && !input.eof(); ++i) {
-        times_matrix.push_back(std::vector<Duration>{});
+        times_matrix[i].resize(tools.size());
         for (size_t j = 0; j < tools.size() && !input.eof(); ++j) {
             std::string buff;
             input >> buff;
-            times_matrix[i].push_back(ParseDuration(buff));
-            std::cout << buff << " " << DurationToStr(times_matrix[i][j]) << " ";
+            times_matrix[i][j] = ParseDuration(buff);
+            std::cout << buff << " ";
             if (times_matrix[i][j] != Duration(0)) {
                 operations[i].AddPossibleTool(j);
             }
