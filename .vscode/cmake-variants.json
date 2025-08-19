@@ -18,10 +18,10 @@
                 "long": "Instrument with Address Sanitizer",
                 "buildType": "Asan"
             },
-            "shad_release": {
-                "short": "Release",
-                "long": "Release version",
-                "buildType": "Release"
+            "tsan": {
+                "short": "Tsan",
+                "long": "Instrument with Thread Sanitizer",
+                "buildType": "Tsan"
             }
         }
     }

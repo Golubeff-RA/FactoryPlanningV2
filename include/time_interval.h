@@ -1,46 +1,20 @@
 #pragma once
 #include "defines.h"
-#include "operation.h"
 
 class TimeInterval {
 public:
-    TimeInterval(TimePoint start, TimePoint end) : start_(start), end_(end) {}
+    TimeInterval(TimePoint start, TimePoint end);
 
-    TimePoint start() const {
-        return start_;
-    }
+    TimePoint start() const;
 
-    TimePoint end() const {
-        return end_;
-    }
+    TimePoint end() const;
+    Duration GetTimeSpan(TimePoint stamp = START_TIME_POINT) const;
 
-    Duration GetTimeSpan(TimePoint stamp = START_TIME_POINT) const {
-        if (stamp == START_TIME_POINT) {
-            return end_ - start_;
-        } 
+    bool Intersects(const TimeInterval& other) const;
+    bool operator<(const TimeInterval& other) const;
 
-        if (end_ > stamp) {
-            return end_ - stamp;
-        }
-
-        return Duration(0);
-    }
-
-    bool Intersects(const TimeInterval& other) const {
-        return !(end_ <= other.start_ || other.end_ < start_);
-    }
-
-    bool operator<(const TimeInterval& other) const {
-        return start_ < other.start_;
-    }
-
-    bool operator==(const TimeInterval& other) const {
-        return start_ <= other.start_ && other.end_ <= end_;
-    }
-
-    bool operator!=(const TimeInterval& other) const {
-        return !(this->operator==(other));
-    }
+    bool operator==(const TimeInterval& other) const;
+    bool operator!=(const TimeInterval& other) const;
 
 private:
     TimePoint start_{START_TIME_POINT};
@@ -49,10 +23,8 @@ private:
 
 class NamedTimeInterval : public TimeInterval {
 public:
-    NamedTimeInterval(size_t operation_id, TimePoint start, TimePoint end) : TimeInterval(start, end), operation_id_(operation_id) {}
-    size_t operation_id() const {
-        return operation_id_;
-    }
+    NamedTimeInterval(size_t operation_id, TimePoint start, TimePoint end);
+    size_t operation_id() const;
 private:
     size_t operation_id_;
 };

@@ -3,29 +3,17 @@
 
 class Work {
 public:
-    Work(TimePoint start, TimePoint directive, double fine_coef)
-        : start_time_(start), directive_(directive), fine_coef_(fine_coef) {}
+    Work(TimePoint start, TimePoint directive, double fine_coef);
 
-    TimePoint start_time() const {
-        return start_time_;
-    }
+    TimePoint start_time() const;
 
-    TimePoint directive() const {
-        return directive_;
-    }
+    TimePoint directive() const;
 
-    double fine_coef() const {
-        return fine_coef_;
-    }
+    double fine_coef() const;
 
-    bool AddOperation(size_t id) {
-        return operation_ids_.insert(id).second;
-    }
+    bool AddOperation(size_t id);
 
-    const IdsSet& operation_ids() const {
-        return operation_ids_;
-    }
-
+    const IdsSet& operation_ids() const;
 private:
     TimePoint start_time_;
     TimePoint directive_;
