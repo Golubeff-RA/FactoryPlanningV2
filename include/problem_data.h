@@ -12,6 +12,7 @@ Duration ParseDuration(const std::string& str);
 
 class ProblemData {
 public:
+    ProblemData() {};
     ProblemData(std::ifstream& input);
 
     std::vector<Tool> tools;

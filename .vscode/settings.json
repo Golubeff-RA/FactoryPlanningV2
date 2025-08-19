@@ -72,6 +72,13 @@
         "fstream": "cpp",
         "expected": "cpp",
         "format": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "csignal": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
+        "cfenv": "cpp",
+        "valarray": "cpp"
     }
 }

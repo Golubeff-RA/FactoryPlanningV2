@@ -13,5 +13,6 @@ public:
     static void PrintGants(const ProblemData& data, std::ostream& out);
     static void PrintShedules(const ProblemData& data, std::ostream& out);
     static void PrintOperations(const ProblemData& data, std::ostream& out);
+    static void PrintWorks(const ProblemData& data, std::ostream& out);
     static void PrintAnswerJSON(const ProblemData& data, std::ostream& out);
 };
