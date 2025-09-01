@@ -15,5 +15,10 @@ double Work::fine_coef() const { return fine_coef_; }
 size_t Work::id() const { return id_; }
 
 bool Work::AddOperation(size_t id) { return operation_ids_.insert(id).second; }
+bool Work::DelOperation(size_t id) { return operation_ids_.erase(id); }
 
 const IdsSet& Work::operation_ids() const { return operation_ids_; }
+
+/*void Work::SetStartTime(TimePoint start) { start_time_ = start; }
+void Work::SetDirective(TimePoint directive) { directive_ = directive; }
+void Work::SetFineCoef(double fine_coef) { fine_coef_ = fine_coef; }*/

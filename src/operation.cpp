@@ -17,7 +17,7 @@ bool Operation::AddPossibleTool(size_t id) {
     return possible_tools_.insert(id).second;
 }
 
-bool Operation::HasDependencies() { return cnt_deps_ == 0; }
+bool Operation::HasDependencies() { return cnt_deps_ != 0; }
 
 bool Operation::Appointed() const {
     return start_time_ != START_TIME_POINT || end_time_ != START_TIME_POINT;
@@ -36,12 +36,16 @@ bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
     return true;
 }
 
-void Operation::SetWorkPtr(Work* work) { ptr_to_work_ = work; }
+void Operation::SetWorkPtr(Work* work) { 
+    ptr_to_work_ = work;
+    possible_start_ = work->start_time();
+    work->AddOperation(id());
+}
 
 StEndTimes Operation::GetStEndTimes() const { return {start_time_, end_time_}; }
 
 bool Operation::CanBeAppointed(TimePoint stamp) const {
-    return !Appointed() && cnt_deps_ == 0 && stamp > possible_start &&
+    return !Appointed() && cnt_deps_ == 0 && stamp > possible_start_ &&
            stamp > ptr_to_work_->start_time();
 }
 
@@ -50,16 +54,17 @@ bool Operation::DelDependency(size_t dep_id, TimePoint dep_end) {
         return false;
     }
     --cnt_deps_;
-    possible_start = std::max(possible_start, dep_end);
+    possible_start_ = std::max(possible_start_, dep_end);
     return true;
 }
 
 bool Operation::stoppable() const { return stoppable_; }
 
 const IdsSet& Operation::possible_tools() const { return possible_tools_; }
+const IdsSet& Operation::dependencies() const { return dependencies_; }
+const IdsSet& Operation::depended() const { return depended_; }
 
 size_t Operation::id() const { return id_; }
-
 size_t Operation::cnt_deps() const { return cnt_deps_; }
 
 const Work* Operation::ptr_to_work() const { return ptr_to_work_; }

@@ -13,14 +13,22 @@ public:
 
     size_t id() const;
 
-    bool AddOperation(size_t id);
-
     const IdsSet& operation_ids() const;
 
+    bool AddOperation(size_t id);
+    
+
+    //void SetStartTime(TimePoint start);
+    //void SetDirective(TimePoint directive);
+    //void SetFineCoef(double fine_coef);
+
 private:
+    bool DelOperation(size_t id);
     TimePoint start_time_;
     TimePoint directive_;
     double fine_coef_;
     size_t id_;
     IdsSet operation_ids_;
+
+    friend class Generator;
 };

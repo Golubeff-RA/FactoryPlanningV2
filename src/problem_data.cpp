@@ -123,15 +123,19 @@ void ProblemData::AddWork(std::ifstream& input) {
     size_t id;
     double fine_coef;
     size_t cnt_edges;
-    input >> start_str >> end_str >> fine_coef >> id >> cnt_edges;
+    size_t cnt_ops;
+    input >> start_str >> end_str >> fine_coef >> id >> cnt_edges >> cnt_ops;
     TimePoint start = ParseTimePoint(start_str);
     TimePoint directive = ParseTimePoint(end_str);
     works.push_back(Work(start, directive, fine_coef, id));
+    size_t op_id;
+    for (size_t i = 0; i < cnt_ops && !input.eof(); ++i) {
+        input >> op_id;
+        works.back().AddOperation(op_id);
+    }
     size_t master, slave;
     for (size_t i = 0; i < cnt_edges && !input.eof(); ++i) {
         input >> master >> slave;
-        works.back().AddOperation(master);
-        works.back().AddOperation(slave);
         operations[master].AddDepended(slave);
         operations[slave].AddDependency(master);
     }

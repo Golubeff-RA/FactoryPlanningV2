@@ -1,17 +1,15 @@
 #pragma once
-#include <vector>
-
 #include "defines.h"
 #include "work.h"
 
 class Operation {
 public:
     Operation(size_t id, bool stoppable);
-
+    // добавляет id операции в список зависимостей (other -> this)
     bool AddDependency(size_t id);
-
+    // добавляет id операции в список зависимых (this -> other)
     bool AddDepended(size_t id);
-
+    // добавляет номер инструмента на котором можно будет выполнить операцию
     bool AddPossibleTool(size_t id);
 
     bool HasDependencies();
@@ -26,14 +24,15 @@ public:
     StEndTimes GetStEndTimes() const;
 
     bool CanBeAppointed(TimePoint stamp) const;
-
+    
     bool DelDependency(size_t dep_id, TimePoint dep_end);
-    bool stoppable() const;
 
-    const IdsSet& possible_tools() const;
+    bool stoppable() const;
+    const IdsSet& possible_tools() const; // вернет список инструментов, которые могут выполнить операцию
+    const IdsSet& dependencies() const; // вернет список зависимостей
+    const IdsSet& depended() const; // вернёт список зависимых
     size_t id() const;
     size_t cnt_deps() const;
-
     const Work* ptr_to_work() const;
 
 private:
@@ -46,6 +45,6 @@ private:
     IdsSet possible_tools_;  // множество возможных исполнителей
     TimePoint start_time_ = START_TIME_POINT;
     TimePoint end_time_ = START_TIME_POINT;
-    TimePoint possible_start =
+    TimePoint possible_start_ =
         START_TIME_POINT;  // момент возможного старта операции
 };

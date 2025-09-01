@@ -27,6 +27,54 @@ std::string DurationToStr(Duration dur) {
     return oss.str();
 }
 
+void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
+    out << "TOOLS\n" << data.tools.size() << std::endl;
+
+    for (const auto& tool : data.tools) {
+        out << "i";
+        for (const auto& interval : tool.GetShedule()) {
+            out << '(' << TimePointToStr(interval.start()) << ' '
+                << TimePointToStr(interval.end()) << ") ";
+        }
+        out << '\n';
+    }
+
+    out << "OPERATIONS\n" << data.operations.size() << std::endl;
+    for (const auto& op : data.operations) {
+        out << op.stoppable() << ' ';
+    }
+
+    out << "\nTIMES\n";
+    for (size_t i = 0; i < data.times_matrix.size(); ++i) {
+        for (size_t j = 0; j < data.times_matrix[i].size(); ++j) {
+            out << DurationToStr(data.times_matrix[i][j]) << ' ';
+        }
+        out << std::endl;
+    }
+
+    for (const auto& work : data.works) {
+        size_t cnt_edges = 0;
+        for (size_t op_id : work.operation_ids()) {
+            cnt_edges += data.operations[op_id].cnt_deps();
+        }
+
+        out << "\nwork\n"
+            << TimePointToStr(work.start_time()) << ' '
+            << TimePointToStr(work.directive()) << ' ' << work.fine_coef()
+            << ' ' << work.id() << ' ' << cnt_edges << ' '
+            << work.operation_ids().size() << std::endl;
+        for (size_t op_id : work.operation_ids()) {
+            out << op_id << ' ';
+        }
+        out << std::endl;
+        for (size_t op_id : work.operation_ids()) {
+            for (size_t dep_id : data.operations[op_id].depended()) {
+                out << op_id << ' ' << dep_id << std::endl;
+            }
+        }
+    }
+}
+
 void Printer::PrintGants(const ProblemData& data, std::ostream& out) {
     for (size_t idx = 0; idx < data.tools.size(); ++idx) {
         out << idx << ") \n";
@@ -62,9 +110,9 @@ void Printer::PrintOperations(const ProblemData& data, std::ostream& out) {
 void Printer::PrintWorks(const ProblemData& data, std::ostream& out) {
     for (const auto& work : data.works) {
         out << "id: " << work.id() << " start: " << work.start_time()
-            << " directive: " << work.directive() << " fine: " << work.fine_coef()
-            << " operations: ";
-        for (size_t op_id: work.operation_ids()) {
+            << " directive: " << work.directive()
+            << " fine: " << work.fine_coef() << " operations: ";
+        for (size_t op_id : work.operation_ids()) {
             out << op_id << " ";
         }
         out << std::endl;
@@ -92,6 +140,7 @@ Json IdsSetToJson(const IdsSet& ids) {
     }
     return answer;
 }
+
 void Printer::PrintAnswerJSON(const ProblemData& data, std::ostream& out) {
     Json answer;
     for (size_t i = 0; i < data.tools.size(); ++i) {

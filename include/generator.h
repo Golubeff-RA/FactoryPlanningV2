@@ -1,4 +1,6 @@
+#include <map>
 #include <random>
+#include <vector>
 
 #include "problem_data.h"
 class RandomGenerator {
@@ -20,13 +22,12 @@ public:
         return dist(gen);
     }
 
-    std::mt19937 GetGen() {
-        return gen;
-    }
+    std::mt19937 GetGen() { return gen; }
 
 private:
     std::mt19937 gen;
 };
+
 
 class Generator {
 public:
@@ -43,53 +44,75 @@ public:
             for (size_t j = 0; j < cnt_intervals; ++j) {
                 TimePoint end = start_shed + GetRandomDuration(100, 1000);
                 shedule.insert(TimeInterval(start_shed, end));
-                // с некоторой вероятностью выбираем интервал для создания операции-работы
-                // заодно и заполняем матрицу времен Эффективное = длине_интервала
-                // остальные = 2 * длина_интервала
-                if (rng.GetBool(0.5)) {
-                    data.works.push_back(
-                        Work(start_shed, end, 0.5, data.works.size()));
-                    data.works.back().AddOperation(data.operations.size());
-                    data.operations.push_back(
-                        Operation(data.operations.size(), false));
-
-                    data.times_matrix.push_back(std::vector<Duration>(
-                        cnt_tools, (end - start_shed) * 2));
-                    data.times_matrix.back()[i] =
-                        end - start_shed;
-
-                    
-                }
                 start_shed = end + GetRandomDuration(100, 1000);
             }
             data.tools.push_back(Tool(shedule));
         }
-    
-        size_t cnt_new_deps = 1;
-        while (cnt_new_deps != 0) {
-            cnt_new_deps = 0;
-            std::shuffle(data.works.begin(), data.works.end(), rng.GetGen());
-            for (auto& work_master : data.works) {
-                if (work_master.operation_ids().size() == 0) {
-                    continue;
-                }
-                for (auto& work_slave: data.works) {
-                    // работу саму с собой склеивать нельзя.
-                    if (work_master.id() == work_slave.id() || work_slave.operation_ids().size() != 1) {
-                        continue;
+
+        // создание работ и операций
+        std::vector<TimeInterval> effective_intervals;
+        for (size_t i = 0; i < data.tools.size(); ++i) {
+            auto tool = data.tools[i];
+            for (const auto& interval : tool.GetShedule()) {
+                if (rng.GetBool(0.4)) {
+                    Operation op{data.operations.size(), true};
+                    Work work{interval.start(), interval.end(), 0,
+                              data.works.size()};
+                    op.SetWorkPtr(&work);
+                    // добавим возможных исполнителей
+                    for (size_t j = 0; j < data.tools.size(); ++j) {
+                        op.AddPossibleTool(j);
                     }
 
-                    
+                    data.works.push_back(std::move(work));
+                    data.operations.push_back(op);
 
+                    data.times_matrix.push_back(std::vector<Duration>(
+                        cnt_tools, interval.GetTimeSpan() * 2));
+                    data.times_matrix.back()[i] = interval.GetTimeSpan();
+                    effective_intervals.push_back(interval);
                 }
             }
         }
+
+
+        // добавление зависимостей в работы
+        size_t cnt_new_deps = 1;
+        
         return data;
     }
 
 private:
     Duration GetRandomDuration(int min, int max) {
         return Duration{ch::seconds{rng.GetInt(min, max)}};
+    }
+
+    // проверяет возможность установки связи между операциями master_id -> slave_id
+    bool CanEdgeBeCreated(size_t master_id, size_t slave_id,
+                          const std::vector<TimeInterval> effective_intervals,
+                          const ProblemData& data) const {
+        // если они уже связаны, то нельзя
+        if (data.operations[master_id].depended().contains(slave_id) ||
+            data.operations[slave_id].depended().contains(master_id)) {
+            return false;
+        }
+
+        // саму с собой связывать тоже нельзя
+        if (master_id == slave_id) {
+            return false;
+        }
+
+        // slave эффективно начинается раньше master - нельзя
+        if (effective_intervals[master_id].start() > effective_intervals[slave_id].start()) {
+            return false;
+        }
+
+        // эффективные интервалы выполнения пересекаются - нельзя
+        if (effective_intervals[master_id].Intersects(effective_intervals[slave_id])) {
+            return false;
+        }
+
+        return true;
     }
 
     RandomGenerator rng;

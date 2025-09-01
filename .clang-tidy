@@ -1,6 +1,6 @@
 ---
 Checks: 'readability-*'
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '^(src/|include/).*'
 WarningsAsErrors: '*'
 CheckOptions:
   - key: readability-identifier-naming.TypeTemplateParameterIgnoredRegexp

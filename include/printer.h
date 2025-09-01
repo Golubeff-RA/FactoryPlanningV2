@@ -10,6 +10,7 @@ std::string DurationToStr(Duration dur);
 
 class Printer {
 public:
+    static void PrintProblemData(const ProblemData& data, std::ostream& out);
     static void PrintGants(const ProblemData& data, std::ostream& out);
     static void PrintShedules(const ProblemData& data, std::ostream& out);
     static void PrintOperations(const ProblemData& data, std::ostream& out);
