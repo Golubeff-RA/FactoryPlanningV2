@@ -51,8 +51,8 @@ ProblemData::ProblemData(std::ifstream& input) {
     }
 
     for (size_t i = 0; i < works.size(); ++i) {
-        for (size_t op_id : works[i].operation_ids()) {
-            operations[op_id].SetWorkPtr(&(works[i]));
+        for (size_t op_id : works[i]->operation_ids()) {
+            operations[op_id].SetWorkPtr((works[i]));
         }
     }
 }
@@ -127,11 +127,11 @@ void ProblemData::AddWork(std::ifstream& input) {
     input >> start_str >> end_str >> fine_coef >> id >> cnt_edges >> cnt_ops;
     TimePoint start = ParseTimePoint(start_str);
     TimePoint directive = ParseTimePoint(end_str);
-    works.push_back(Work(start, directive, fine_coef, id));
+    works.push_back(WorkPtr(new Work(start, directive, fine_coef, id)));
     size_t op_id;
     for (size_t i = 0; i < cnt_ops && !input.eof(); ++i) {
         input >> op_id;
-        works.back().AddOperation(op_id);
+        works.back()->AddOperation(op_id);
     }
     size_t master, slave;
     for (size_t i = 0; i < cnt_edges && !input.eof(); ++i) {

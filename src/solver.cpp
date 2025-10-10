@@ -59,7 +59,7 @@ void Solver::Solve(ProblemData& data) {
 std::set<TimePoint> Solver::GetStartTimes(const ProblemData& data) {
     std::set<TimePoint> times;
     for (const auto& work : data.works) {
-        times.insert(work.start_time());
+        times.insert(work->start_time());
     }
 
     for (const auto& tool : data.tools) {

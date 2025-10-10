@@ -36,7 +36,7 @@ bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
     return true;
 }
 
-void Operation::SetWorkPtr(Work* work) { 
+void Operation::SetWorkPtr(WorkPtr work) { 
     ptr_to_work_ = work;
     possible_start_ = work->start_time();
     work->AddOperation(id());
@@ -67,4 +67,4 @@ const IdsSet& Operation::depended() const { return depended_; }
 size_t Operation::id() const { return id_; }
 size_t Operation::cnt_deps() const { return cnt_deps_; }
 
-const Work* Operation::ptr_to_work() const { return ptr_to_work_; }
+WorkPtr Operation::ptr_to_work() const { return ptr_to_work_; }

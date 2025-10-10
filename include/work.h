@@ -1,6 +1,8 @@
 #pragma once
 #include "defines.h"
 
+#include <memory>
+
 class Work {
 public:
     Work(TimePoint start, TimePoint directive, double fine_coef, size_t id);
@@ -32,3 +34,5 @@ private:
 
     friend class Generator;
 };
+
+using WorkPtr = std::shared_ptr<Work>;

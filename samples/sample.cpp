@@ -15,6 +15,6 @@ Duration RndDuration() { return Duration(ch::seconds(rand() % 3000)); }
 
 int main() {
     Generator gen;
-    ProblemData data(gen.Generate(5, 5, ch::system_clock::now(), 100));
+    ProblemData data(gen.Generate(5, 5, ch::system_clock::now(), 114));
     Printer::PrintProblemData(data, std::cout);
 }

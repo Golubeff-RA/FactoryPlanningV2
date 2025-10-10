@@ -79,6 +79,7 @@
         "forward_list": "cpp",
         "future": "cpp",
         "cfenv": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "complex": "cpp"
     }
 }

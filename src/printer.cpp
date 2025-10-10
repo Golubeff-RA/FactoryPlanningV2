@@ -54,20 +54,20 @@ void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
 
     for (const auto& work : data.works) {
         size_t cnt_edges = 0;
-        for (size_t op_id : work.operation_ids()) {
+        for (size_t op_id : work->operation_ids()) {
             cnt_edges += data.operations[op_id].cnt_deps();
         }
 
         out << "\nwork\n"
-            << TimePointToStr(work.start_time()) << ' '
-            << TimePointToStr(work.directive()) << ' ' << work.fine_coef()
-            << ' ' << work.id() << ' ' << cnt_edges << ' '
-            << work.operation_ids().size() << std::endl;
-        for (size_t op_id : work.operation_ids()) {
+            << TimePointToStr(work->start_time()) << ' '
+            << TimePointToStr(work->directive()) << ' ' << work->fine_coef()
+            << ' ' << work->id() << ' ' << cnt_edges << ' '
+            << work->operation_ids().size() << std::endl;
+        for (size_t op_id : work->operation_ids()) {
             out << op_id << ' ';
         }
         out << std::endl;
-        for (size_t op_id : work.operation_ids()) {
+        for (size_t op_id : work->operation_ids()) {
             for (size_t dep_id : data.operations[op_id].depended()) {
                 out << op_id << ' ' << dep_id << std::endl;
             }
@@ -109,10 +109,10 @@ void Printer::PrintOperations(const ProblemData& data, std::ostream& out) {
 
 void Printer::PrintWorks(const ProblemData& data, std::ostream& out) {
     for (const auto& work : data.works) {
-        out << "id: " << work.id() << " start: " << work.start_time()
-            << " directive: " << work.directive()
-            << " fine: " << work.fine_coef() << " operations: ";
-        for (size_t op_id : work.operation_ids()) {
+        out << "id: " << work->id() << " start: " << work->start_time()
+            << " directive: " << work->directive()
+            << " fine: " << work->fine_coef() << " operations: ";
+        for (size_t op_id : work->operation_ids()) {
             out << op_id << " ";
         }
         out << std::endl;
@@ -158,9 +158,9 @@ void Printer::PrintAnswerJSON(const ProblemData& data, std::ostream& out) {
 
     for (const auto& work : data.works) {
         answer["works"].push_back(
-            {{"id", work.id()},
-             {"fine_coef", work.fine_coef()},
-             {"operations", IdsSetToJson(work.operation_ids())}});
+            {{"id", work->id()},
+             {"fine_coef", work->fine_coef()},
+             {"operations", IdsSetToJson(work->operation_ids())}});
     }
     out << answer.dump(4);
 }

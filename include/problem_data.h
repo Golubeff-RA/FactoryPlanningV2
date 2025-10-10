@@ -16,7 +16,7 @@ public:
     ProblemData(std::ifstream& input);
 
     std::vector<Tool> tools;
-    std::vector<Work> works;
+    std::vector<WorkPtr> works;
     std::vector<Operation> operations;
     std::vector<std::vector<Duration>> times_matrix;
 
