@@ -1,57 +1,75 @@
+import json
 import plotly.express as px
+import pandas as pd
 from datetime import datetime
 
-# Ваши данные
-data = [
-    {"end": "17.08.25_12:00:00", "executor": 1, "operation": 101, "start": "17.08.25_10:00:00"},
-    {"end": "17.08.25_15:00:00", "executor": 1, "operation": 102, "start": "17.08.25_13:00:00"},
-    {"end": "17.08.25_11:30:00", "executor": 2, "operation": 201, "start": "17.08.25_09:00:00"}
-]
+def parse_datetime(date_str):
+    return datetime.strptime(date_str, '%d.%m.%y_%H:%M:%S')
 
-# Преобразование дат
-def parse_date(date_str):
-    return datetime.strptime(date_str, "%d.%m.%y_%H:%M:%S")
+def create_gantt_express(json_file_path):
+    """Создание графика Ганта с помощью Plotly Express"""
+    
+    with open(json_file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    # Создаем список для данных
+    gantt_data = []
+    
+    # Словарь для соответствия operation -> work
+    operation_to_work = {}
+    for work in data['works']:
+        for operation_id in work['operations']:
+            operation_to_work[operation_id] = work['id']
+    
+    # Обрабатываем инструменты
+    for tool_group in data['tools']:
+        tool = tool_group
+        tool_id = tool['id']
+            
+        for work_process in tool['work_process']:
+            operation_id = work_process['operation']
+            work_id = operation_to_work.get(operation_id, -1)
+                
+            start_time = parse_datetime(work_process['start'])
+            end_time = parse_datetime(work_process['end'])
+                
+            operation_info = next((op for op in data['operations'] if op['id'] == operation_id), None)
+                
+            if operation_info:
+                gantt_data.append({
+                    'Tool': f'{tool_id}',
+                    'Operation': f'{operation_id}',
+                    'Work': f'{work_id}',
+                    'Start': start_time,
+                    'Finish': end_time,
+                    'Duration (s)': (end_time - start_time).total_seconds(),
+                    'Appointed': 'True' if operation_info['appointed'] else 'False'
+                })
+    
+    df = pd.DataFrame(gantt_data)
+    
+    if df.empty:
+        print("Нет данных для построения графика")
+        return
+    
+    # Создание графика
+    fig = px.timeline(
+        df, 
+        x_start="Start", 
+        x_end="Finish", 
+        y="Tool",
+        color="Work",
+        hover_data=["Operation", "Appointed", "Duration (s)"],
+        title="График Ганта: Выполнение операций"
+    )
+    
+    fig.update_layout(
+        height=600,
+        xaxis_title="Время",
+        yaxis_title="Инструменты",
+        showlegend=True
+    )
+    
+    fig.show()
 
-# Подготовка данных для Plotly
-df = []
-for task in data:
-    df.append({
-        "Task": f"Операция {task['operation']}",
-        "Start": parse_date(task["start"]),
-        "Finish": parse_date(task["end"]),
-        "Executor": f"Исполнитель {task['executor']}",
-        "Operation": task["operation"]
-    })
-
-# Создание графика Ганта
-fig = px.timeline(
-    df,
-    x_start="Start",
-    x_end="Finish",
-    y="Executor",
-    color="Executor",
-    text="Task",
-    title="График выполнения операций",
-    labels={"Executor": "Исполнитель"},
-    color_discrete_sequence=px.colors.qualitative.Pastel
-)
-
-# Настройка внешнего вида
-fig.update_traces(textposition="inside")
-fig.update_yaxes(autorange="reversed")  # Исполнитель 1 вверху
-fig.update_layout(
-    hovermode="x",
-    showlegend=True,
-    xaxis_title="Время",
-    yaxis_title="Исполнитель",
-    height=400,
-    width=800
-)
-
-# Настройка отображения времени
-fig.update_xaxes(
-    tickformat="%H:%M\n%d.%m.%y",
-    rangeslider_visible=True
-)
-
-fig.show()
+create_gantt_express("solution.json")

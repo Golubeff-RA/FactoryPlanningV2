@@ -20,7 +20,7 @@ Duration TimeInterval::GetTimeSpan(TimePoint stamp) const {
 }
 
 bool TimeInterval::Intersects(const TimeInterval& other) const {
-    return !(end_ <= other.start_ || other.end_ < start_);
+    return !(end_ <= other.start_ || other.end_ <= start_);
 }
 
 bool TimeInterval::operator<(const TimeInterval& other) const {

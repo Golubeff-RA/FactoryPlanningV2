@@ -11,10 +11,11 @@ public:
     void Appoint(Operation& operation, TimePoint stamp, Duration span,
                  std::vector<Operation>& all_operations);
     const std::set<TimeInterval>& GetShedule() const;
-    const std::list<NamedTimeInterval>& GetWorkProcess() const;
+    const std::set<NamedTimeInterval>& GetWorkProcess() const;
 
 private:
     std::set<TimeInterval> shedule_;
-    std::list<NamedTimeInterval> work_process_;
+    std::set<NamedTimeInterval> work_process_;
     std::set<TimeInterval>::const_iterator GetStartIterator(TimePoint stamp);
+    bool IntersectsWithWorkProc(TimePoint timestamp) const;
 };

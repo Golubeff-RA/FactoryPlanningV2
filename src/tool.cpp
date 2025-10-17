@@ -1,5 +1,5 @@
 #include "tool.h"
-
+#include <iostream>
 Tool::Tool(const std::set<TimeInterval> shedule) : shedule_(shedule) {}
 Tool::Tool(std::initializer_list<TimeInterval>&& shedule) : shedule_(shedule) {}
 
@@ -9,7 +9,12 @@ bool Tool::CanStartWork(const Operation& operation, TimePoint stamp, Duration sp
         return false;
     }
 
-    if (work_process_.back().Intersects({stamp, stamp})) {
+    // вот это была полная шляпа, пересекались интервалы
+    /*if (work_process_.back().Intersects({stamp, stamp})) {
+        return false;
+    }*/
+
+    if (IntersectsWithWorkProc(stamp)) {
         return false;
     }
 
@@ -26,26 +31,46 @@ bool Tool::CanStartWork(const Operation& operation, TimePoint stamp, Duration sp
 }
 
 void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
-             std::vector<Operation>& all_operations) {
+                   std::vector<Operation>& all_operations) {
     Duration time(0);
     auto it = GetStartIterator(stamp);
-
     TimePoint start_time = stamp;
-    while (it != shedule_.end() && time < span) {
-        work_process_.push_back(
-            {operation.id(), stamp, std::min(it->end(), stamp + span - time)});
-        time += it->GetTimeSpan(stamp);
+    while (time < span) {
+        NamedTimeInterval interval{operation.id(), std::max(stamp, it->start()),
+                                   std::min(it->end(), stamp + span - time)};
+        if (work_process_.contains(interval)) {
+            std::cout << "Warning! False appointment" << std::endl;
+        }
+        work_process_.insert(interval);
+        time += interval.GetTimeSpan();
         ++it;
         stamp = it->start();
     }
-    TimePoint end_time = work_process_.back().end();
+    TimePoint end_time = std::prev(work_process_.end())->end();
     operation.SetTimes(start_time, end_time, time, all_operations);
 }
 
 const std::set<TimeInterval>& Tool::GetShedule() const { return shedule_; }
 
-const std::list<NamedTimeInterval>& Tool::GetWorkProcess() const { return work_process_; }
+const std::set<NamedTimeInterval>& Tool::GetWorkProcess() const { return work_process_; }
 
+bool Tool::IntersectsWithWorkProc(TimePoint stamp) const {
+    NamedTimeInterval interval(666, stamp, stamp);
+    if (!work_process_.empty()) {
+        const auto& last = *work_process_.rbegin();
+        if (interval.start() < last.end()) {
+            return true;
+        }
+    }
+
+    for (const auto& i : work_process_) {
+        if (i.Intersects(interval)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 std::set<TimeInterval>::const_iterator Tool::GetStartIterator(TimePoint stamp) {
     if (shedule_.empty()) {
         return shedule_.end();
