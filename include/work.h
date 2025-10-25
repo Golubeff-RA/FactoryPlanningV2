@@ -1,7 +1,7 @@
 #pragma once
-#include "defines.h"
-
 #include <memory>
+
+#include "defines.h"
 
 class Work {
 public:
@@ -18,11 +18,6 @@ public:
     const IdsSet& operation_ids() const;
 
     bool AddOperation(size_t id);
-    
-
-    //void SetStartTime(TimePoint start);
-    //void SetDirective(TimePoint directive);
-    //void SetFineCoef(double fine_coef);
 
 private:
     bool DelOperation(size_t id);

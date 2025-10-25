@@ -20,9 +20,8 @@ std::string DurationToStr(Duration dur) {
     auto seconds = ch::duration_cast<ch::seconds>(dur - days - hours - minutes);
 
     std::ostringstream oss;
-    oss << days.count() << '_' << std::setfill('0') << std::setw(2)
-        << hours.count() << ':' << std::setw(2) << minutes.count() << ':'
-        << std::setw(2) << seconds.count();
+    oss << days.count() << '_' << std::setfill('0') << std::setw(2) << hours.count() << ':'
+        << std::setw(2) << minutes.count() << ':' << std::setw(2) << seconds.count();
 
     return oss.str();
 }
@@ -33,8 +32,8 @@ void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
     for (const auto& tool : data.tools) {
         out << "i";
         for (const auto& interval : tool.GetShedule()) {
-            out << '(' << TimePointToStr(interval.start()) << ' '
-                << TimePointToStr(interval.end()) << ") ";
+            out << '(' << TimePointToStr(interval.start()) << ' ' << TimePointToStr(interval.end())
+                << ") ";
         }
         out << '\n';
     }
@@ -59,9 +58,8 @@ void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
         }
 
         out << "\nwork\n"
-            << TimePointToStr(work->start_time()) << ' '
-            << TimePointToStr(work->directive()) << ' ' << work->fine_coef()
-            << ' ' << work->id() << ' ' << cnt_edges << ' '
+            << TimePointToStr(work->start_time()) << ' ' << TimePointToStr(work->directive()) << ' '
+            << work->fine_coef() << ' ' << work->id() << ' ' << cnt_edges << ' '
             << work->operation_ids().size() << std::endl;
         for (size_t op_id : work->operation_ids()) {
             out << op_id << ' ';
@@ -79,9 +77,8 @@ void Printer::PrintGants(const ProblemData& data, std::ostream& out) {
     for (size_t idx = 0; idx < data.tools.size(); ++idx) {
         out << idx << ") \n";
         for (const auto& interval : data.tools[idx].GetWorkProcess()) {
-            out << "(" << interval.operation_id() << ", "
-                << TimePointToStr(interval.start()) << ", "
-                << TimePointToStr(interval.end()) << ")\n";
+            out << "(" << interval.operation_id() << ", " << TimePointToStr(interval.start())
+                << ", " << TimePointToStr(interval.end()) << ")\n";
         }
         out << '\n';
     }
@@ -91,8 +88,8 @@ void Printer::PrintShedules(const ProblemData& data, std::ostream& out) {
     for (size_t idx = 0; idx < data.tools.size(); ++idx) {
         out << idx << ")\n";
         for (const auto& interval : data.tools[idx].GetShedule()) {
-            out << "(" << TimePointToStr(interval.start()) << ", "
-                << TimePointToStr(interval.end()) << ")\n";
+            out << "(" << TimePointToStr(interval.start()) << ", " << TimePointToStr(interval.end())
+                << ")\n";
         }
         out << '\n';
     }
@@ -110,8 +107,8 @@ void Printer::PrintOperations(const ProblemData& data, std::ostream& out) {
 void Printer::PrintWorks(const ProblemData& data, std::ostream& out) {
     for (const auto& work : data.works) {
         out << "id: " << work->id() << " start: " << work->start_time()
-            << " directive: " << work->directive()
-            << " fine: " << work->fine_coef() << " operations: ";
+            << " directive: " << work->directive() << " fine: " << work->fine_coef()
+            << " operations: ";
         for (size_t op_id : work->operation_ids()) {
             out << op_id << " ";
         }
@@ -121,6 +118,7 @@ void Printer::PrintWorks(const ProblemData& data, std::ostream& out) {
 
 Json ToolToJson(const Tool& tool, const ProblemData& data, size_t id) {
     Json works_json = Json::array();
+    Json shedule_json = Json::array();
     for (const auto& work_interval : tool.GetWorkProcess()) {
         auto op_id = work_interval.operation_id();
         auto wo_id = data.operations[op_id].ptr_to_work()->id();
@@ -130,7 +128,12 @@ Json ToolToJson(const Tool& tool, const ProblemData& data, size_t id) {
                               {"end", TimePointToStr(work_interval.end())}});
     }
 
-    return {{"id", id}, {"work_process", works_json}};
+    for (const auto& interval : tool.GetShedule()) {
+        shedule_json.push_back({{"start", TimePointToStr(interval.start())},
+                                {"end", TimePointToStr(interval.end())}});
+    }
+
+    return {{"id", id}, {"work_process", works_json}, {"shedule", shedule_json}};
 }
 
 Json IdsSetToJson(const IdsSet& ids) {
@@ -141,26 +144,30 @@ Json IdsSetToJson(const IdsSet& ids) {
     return answer;
 }
 
-void Printer::PrintAnswerJSON(const ProblemData& data, std::ostream& out) {
+void Printer::PrintAnswerJSON(const ProblemData& data, Score score, std::ostream& out) {
     Json answer;
+    answer["score"].push_back({{"appointed_fine", score.appointed_fine},
+                               {"not_appointed_fine", score.not_appointed_fine}});
+
     for (size_t i = 0; i < data.tools.size(); ++i) {
         answer["tools"].push_back({ToolToJson(data.tools[i], data, i)});
     }
 
     for (const auto& oper : data.operations) {
-        answer["operations"].push_back(
-            {{"id", oper.id()},
-             {"stoppable", oper.stoppable()},
-             {"appointed", oper.Appointed()},
-             {"start", TimePointToStr(oper.GetStEndTimes().first)},
-             {"end", TimePointToStr(oper.GetStEndTimes().second)}});
+        answer["operations"].push_back({{"id", oper.id()},
+                                        {"stoppable", oper.stoppable()},
+                                        {"appointed", oper.Appointed()},
+                                        {"depended", IdsSetToJson(oper.depended())},
+                                        {"start", TimePointToStr(oper.GetStEndTimes().first)},
+                                        {"end", TimePointToStr(oper.GetStEndTimes().second)}});
     }
 
     for (const auto& work : data.works) {
-        answer["works"].push_back(
-            {{"id", work->id()},
-             {"fine_coef", work->fine_coef()},
-             {"operations", IdsSetToJson(work->operation_ids())}});
+        answer["works"].push_back({{"id", work->id()},
+                                   {"fine_coef", work->fine_coef()},
+                                   {"start_time", TimePointToStr(work->start_time())},
+                                   {"directive", TimePointToStr(work->directive())},
+                                   {"operations", IdsSetToJson(work->operation_ids())}});
     }
     out << answer.dump(4);
 }

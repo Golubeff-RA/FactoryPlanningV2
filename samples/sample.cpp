@@ -48,22 +48,46 @@ void TimeChecker(const ProblemData& data) {
 }
 
 int main() {
+    Score score;
     Generator gen;
-    BasicScorer scorer;
     Solver solver;
-    GenerationParams params{100, 10, ch::system_clock::now(), 500, 1000, 1000, 1500, 0.7, 100};
+    std::ofstream out_dummy("solution_dummy.json");
+    std::ofstream out_directive("solution_directive.json");
+    std::ofstream out_robin("solution_robin.json");
+    std::ofstream out_stoppable("solution_stoppable.json");
+    GenerationParams params{
+        20, 30, ch::system_clock::now(), {100, 200}, {1000, 2000}, 0.3, 0.5, 0.4, 65783928};
     ProblemData data(gen.Generate(params));
     std::cout << "data created!\n";
 
     ProblemData data_copy2 = data;
-    solver.Solve<DirectiveTimeSorter>(data_copy2);
-    Score score = scorer.CalcScore(data_copy2, 100);
-    std::cout << "Score - appointed_fine = " << score.appointed_fine
-              << " not_appointed_fine = " << score.not_appointed_fine << std::endl;
-    std::ofstream out("solution.json");
-    Printer::PrintAnswerJSON(data_copy2, out);
+    solver.Solve<DummySorter>(data_copy2, 1232412);
+    score = BasicScorer::CalcScore(data_copy2, 100);
+    Printer::PrintAnswerJSON(data_copy2, score, out_dummy);
+    std::cout << "Dummy:       " << score.appointed_fine << " || " << score.not_appointed_fine
+              << std::endl;
     CollisionDetector(data_copy2);
     TimeChecker(data_copy2);
 
+    data_copy2 = data;
+    solver.Solve<DirectiveTimeSorter>(data_copy2, 1232412);
+    score = BasicScorer::CalcScore(data_copy2, 100);
+    Printer::PrintAnswerJSON(data_copy2, score, out_directive);
+    std::cout << "Directive:   " << score.appointed_fine << " || " << score.not_appointed_fine
+              << std::endl;
+
+    data_copy2 = data;
+    solver.Solve<RoundRobinSorter>(data_copy2, 1232412);
+    score = BasicScorer::CalcScore(data_copy2, 100);
+    Printer::PrintAnswerJSON(data_copy2, score, out_robin);
+    std::cout << "Round robin: " << score.appointed_fine << " || " << score.not_appointed_fine
+              << std::endl;
+
+    data_copy2 = data;
+    solver.Solve<DirectiveTimeSorter>(data_copy2, 1232412);
+    score = BasicScorer::CalcScore(data_copy2, 100);
+    Printer::PrintAnswerJSON(data_copy2, score, out_stoppable);
+    std::cout << "Stoppable:   " << score.appointed_fine << " || " << score.not_appointed_fine
+              << std::endl;
     return 0;
 }

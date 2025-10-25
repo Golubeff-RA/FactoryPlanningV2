@@ -3,6 +3,7 @@
 
 #include "defines.h"
 #include "problem_data.h"
+#include "scorer.h"
 
 std::string TimePointToStr(TimePoint tp);
 
@@ -15,5 +16,5 @@ public:
     static void PrintShedules(const ProblemData& data, std::ostream& out);
     static void PrintOperations(const ProblemData& data, std::ostream& out);
     static void PrintWorks(const ProblemData& data, std::ostream& out);
-    static void PrintAnswerJSON(const ProblemData& data, std::ostream& out);
+    static void PrintAnswerJSON(const ProblemData& data, Score score, std::ostream& out);
 };

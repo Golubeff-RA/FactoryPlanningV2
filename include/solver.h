@@ -2,46 +2,40 @@
 #include <algorithm>
 #include <concepts>
 #include <deque>
+#include <iostream>
 #include <unordered_map>
 
-#include "problem_data.h"
 #include "generator.h"
-
-#include <iostream>
+#include "problem_data.h"
 
 template <typename T>
-concept CanSort = requires(T obj, const ProblemData& data, IdsVec front, const IdsSet& tools) {
+concept CanSort = requires(T obj, const ProblemData& data, IdsVec& front, const IdsSet& tools) {
     { obj.SortFront(data, front, tools) } -> std::same_as<void>;
 };
 
-
-inline void PrintVector1(IdsVec vec) {
-    for (auto id : vec) {
-        std::cout << id << ' ';
-    }
-    if (!vec.empty())
-        std::cout << std::endl;
-}
-
 struct DummySorter {
-    void SortFront(const ProblemData& data, IdsVec front, const IdsSet& tools) {
-
-    }
+    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {}
 };
 
 struct DirectiveTimeSorter {
-    void SortFront(const ProblemData& data, IdsVec front, const IdsSet& tools) {
-        //PrintVector1(front);
+    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].ptr_to_work()->directive() <
                    data.operations[b].ptr_to_work()->directive();
         });
-        //PrintVector1(front);
+    }
+};
+
+struct StoppableSorter {
+    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
+        std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
+            return data.operations[a].stoppable() > data.operations[b].stoppable();
+        });
     }
 };
 
 struct RoundRobinSorter {
-    void SortFront(const ProblemData& data, IdsVec front, const IdsSet& tools) {
+    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
         if (works_q.empty()) {
             for (auto work : data.works) {
                 works_q.push_back(work->id());
@@ -67,11 +61,11 @@ struct RoundRobinSorter {
 
 class Solver {
 public:
-    Solver() : gena_(52) {
-    }
+    Solver() : gena_(185643241) {}
 
     template <CanSort Sorter>
-    void Solve(ProblemData& data) {
+    void Solve(ProblemData& data, int seed = 185643241) {
+        gena_ = RandomGenerator(seed);
         Sorter sorter;
         TimePoint current_time;
         std::set<TimePoint> timestamps = GetStartTimes(data);
@@ -103,20 +97,32 @@ public:
             }
 
             // назначение
+            // вот здесь надо не первый попавшийся инструмент использовать
+            // а для каждой операции в текущем фронте искать самый оптимальный
             for (size_t oper : F) {
                 auto& operation = data.operations[oper];
+                size_t best_tool_id = INT64_MAX;
+                Duration best_duration = Duration(INT64_MAX);
                 for (size_t r : R) {
                     if (operation.possible_tools().contains(r) &&
                         data.tools[r].CanStartWork(operation, current_time,
                                                    data.times_matrix[oper][r])) {
-                        data.tools[r].Appoint(operation, current_time, data.times_matrix[oper][r],
-                                              data.operations);
-                        timestamps.insert(operation.GetStEndTimes().second);
-                        R.erase(r);
-                        break;
+                        if (data.times_matrix[oper][r] < best_duration) {
+                            best_duration = data.times_matrix[oper][r];
+                            best_tool_id = r;
+                        }
                     }
                 }
-            } 
+                if (best_tool_id == INT64_MAX) {
+                    continue;
+                }
+
+                data.tools[best_tool_id].Appoint(operation, current_time,
+                                                 data.times_matrix[oper][best_tool_id],
+                                                 data.operations);
+                timestamps.insert(operation.GetStEndTimes().second);
+                R.erase(best_tool_id);
+            }
         }
     }
 

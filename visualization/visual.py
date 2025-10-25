@@ -12,16 +12,13 @@ def create_gantt_express(json_file_path):
     with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    # Создаем список для данных
     gantt_data = []
     
-    # Словарь для соответствия operation -> work
     operation_to_work = {}
     for work in data['works']:
         for operation_id in work['operations']:
             operation_to_work[operation_id] = work['id']
-    
-    # Обрабатываем инструменты
+
     for tool_group in data['tools']:
         tool = tool_group
         tool_id = tool['id']
@@ -51,8 +48,7 @@ def create_gantt_express(json_file_path):
     if df.empty:
         print("Нет данных для построения графика")
         return
-    
-    # Создание графика
+
     fig = px.timeline(
         df, 
         x_start="Start", 
@@ -72,4 +68,4 @@ def create_gantt_express(json_file_path):
     
     fig.show()
 
-create_gantt_express("solution.json")
+create_gantt_express("solution3.json")
