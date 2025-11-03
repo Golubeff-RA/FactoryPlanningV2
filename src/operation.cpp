@@ -20,7 +20,7 @@ bool Operation::AddPossibleTool(size_t id) {
 bool Operation::HasDependencies() { return cnt_deps_ != 0; }
 
 bool Operation::Appointed() const {
-    return start_time_ != START_TIME_POINT || end_time_ != START_TIME_POINT;
+    return start_time_ != START_TIME_POINT && end_time_ != START_TIME_POINT;
 }
 
 bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
@@ -28,7 +28,7 @@ bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
     start_time_ = start;
     end_time_ = end;
 
-    // мы назначили время выполнения опреации, значит надо уменьшить число
+    // мы назначили время выполнения операции, значит надо уменьшить число
     // зависимостей для всех зависимых
     for (size_t dep_id : depended_) {
         all_operations[dep_id].DelDependency(id_, end);
@@ -36,17 +36,16 @@ bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
     return true;
 }
 
-void Operation::SetWorkPtr(WorkPtr work) { 
+void Operation::SetWorkPtr(WorkPtr work) {
     ptr_to_work_ = work;
-    possible_start_ = work->start_time();
     work->AddOperation(id());
 }
 
 StEndTimes Operation::GetStEndTimes() const { return {start_time_, end_time_}; }
 
 bool Operation::CanBeAppointed(TimePoint stamp) const {
-    return !Appointed() && cnt_deps_ == 0 && stamp > possible_start_ &&
-           stamp > ptr_to_work_->start_time();
+    return !Appointed() && cnt_deps_ == 0 &&
+           stamp >= ptr_to_work_->start_time() && stamp >= possible_start_;
 }
 
 bool Operation::DelDependency(size_t dep_id, TimePoint dep_end) {

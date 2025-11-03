@@ -25,6 +25,7 @@ class NamedTimeInterval : public TimeInterval {
 public:
     NamedTimeInterval(size_t operation_id, TimePoint start, TimePoint end);
     size_t operation_id() const;
+
 private:
     size_t operation_id_;
 };

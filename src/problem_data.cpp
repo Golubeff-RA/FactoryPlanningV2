@@ -35,10 +35,8 @@ Duration ParseDuration(const std::string& str) {
 
 ProblemData::ProblemData(std::ifstream& input) {
     std::string buffer;
-    size_t counter = 0;
-    while (!input.eof() && counter != 100) {
+    while (!input.eof()) {
         std::getline(input, buffer);
-        ++counter;
         if (buffer == "TOOLS") {
             FillTools(input);
         } else if (buffer == "OPERATIONS") {
@@ -119,7 +117,8 @@ void ProblemData::FillTimes(std::ifstream& input) {
 }
 
 void ProblemData::AddWork(std::ifstream& input) {
-    std::string start_str, end_str;
+    std::string start_str;
+    std::string end_str;
     size_t id;
     double fine_coef;
     size_t cnt_edges;
@@ -133,7 +132,8 @@ void ProblemData::AddWork(std::ifstream& input) {
         input >> op_id;
         works.back()->AddOperation(op_id);
     }
-    size_t master, slave;
+    size_t master;
+    size_t slave;
     for (size_t i = 0; i < cnt_edges && !input.eof(); ++i) {
         input >> master >> slave;
         operations[master].AddDepended(slave);

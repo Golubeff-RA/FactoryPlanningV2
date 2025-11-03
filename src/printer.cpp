@@ -129,8 +129,8 @@ Json ToolToJson(const Tool& tool, const ProblemData& data, size_t id) {
     }
 
     for (const auto& interval : tool.GetShedule()) {
-        shedule_json.push_back({{"start", TimePointToStr(interval.start())},
-                                {"end", TimePointToStr(interval.end())}});
+        shedule_json.push_back(
+            {{"start", TimePointToStr(interval.start())}, {"end", TimePointToStr(interval.end())}});
     }
 
     return {{"id", id}, {"work_process", works_json}, {"shedule", shedule_json}};

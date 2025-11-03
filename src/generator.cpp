@@ -1,7 +1,10 @@
 #include "generator.h"
 
+#include <algorithm>
+#include <queue>
+
 ProblemData Generator::Generate(GenerationParams params) {
-    rng = RandomGenerator(params.seed);
+    rng_ = RandomGenerator(params.seed);
     ProblemData data;
     // создаём расписание исполнителей
     CreateShedules(params, data);
@@ -23,7 +26,7 @@ ProblemData Generator::Generate(GenerationParams params) {
     double sum = 0;
     std::vector<double> fines(data.works.size(), 0.0);
     for (auto& fine : fines) {
-        fine = rng.GetDouble(0.0, 1.0);
+        fine = rng_.GetDouble(0.0, 1.0);
         sum += fine;
     }
 
@@ -36,7 +39,7 @@ ProblemData Generator::Generate(GenerationParams params) {
 bool Generator::CanEdgeBeCreated(
     size_t master_id, size_t slave_id,
     const std::vector<std::pair<size_t, TimeInterval>>& effective_intervals,
-    const ProblemData& data) const {
+    const ProblemData& data) {
     if (data.operations[master_id].ptr_to_work() != data.operations[slave_id].ptr_to_work() &&
         (!data.operations[slave_id].dependencies().empty() ||
          !data.operations[slave_id].depended().empty())) {
@@ -52,12 +55,12 @@ bool Generator::CanEdgeBeCreated(
     }
 
     std::vector<bool> visited(data.operations.size(), false);
-    std::queue<size_t> q;
-    q.push(slave_id);
+    std::queue<size_t> que;
+    que.push(slave_id);
     visited[slave_id] = true;
-    while (!q.empty()) {
-        size_t current = q.front();
-        q.pop();
+    while (!que.empty()) {
+        size_t current = que.front();
+        que.pop();
         // мы создадим цикл
         if (current == master_id) {
             return false;
@@ -66,7 +69,7 @@ bool Generator::CanEdgeBeCreated(
         for (int neighbor : data.operations[current].depended()) {
             if (!visited[neighbor]) {
                 visited[neighbor] = true;
-                q.push(neighbor);
+                que.push(neighbor);
             }
         }
     }
@@ -104,6 +107,8 @@ void Generator::CreateShedules(GenerationParams params, ProblemData& data) {
     }
 }
 
+constexpr size_t kWorkIdMult = 100;
+
 void Generator::CreateOperations(
     GenerationParams params, ProblemData& data,
     std::vector<std::pair<size_t, TimeInterval>>& effective_intervals) {
@@ -112,18 +117,18 @@ void Generator::CreateOperations(
         for (auto it = tool.GetShedule().begin();
              it != std::prev(std::prev(tool.GetShedule().end())); ++it) {
             auto interval = TimeInterval(it->start(), it->start() + (it->end() - it->start()));
-            if (rng.GetBool(params.operation_create_prob)) {
-                Operation op{data.operations.size(), rng.GetBool()};
+            if (rng_.GetBool(params.operation_create_prob)) {
+                Operation op{data.operations.size(), rng_.GetBool()};
                 // добавим возможных исполнителей
                 for (size_t j = 0; j < data.tools.size(); ++j) {
-                    if (rng.GetBool(params.add_tool_prob)) {
+                    if (rng_.GetBool(params.add_tool_prob)) {
                         op.AddPossibleTool(j);
                     }
                 }
                 op.AddPossibleTool(i);
 
-                data.works.push_back(WorkPtr(
-                    new Work{interval.start(), interval.end(), 0, (data.works.size() + 1) * 100}));
+                data.works.push_back(WorkPtr(new Work{interval.start(), interval.end(), 0,
+                                                      (data.works.size() + 1) * kWorkIdMult}));
                 op.SetWorkPtr(data.works.back());
                 data.operations.push_back(op);
 
@@ -146,7 +151,7 @@ void Generator::CreateOperations(
 
     std::vector<size_t> permutation(data.operations.size(), 0);
     std::iota(permutation.begin(), permutation.end(), 0);
-    std::shuffle(permutation.begin(), permutation.end(), rng.GetGen());
+    std::shuffle(permutation.begin(), permutation.end(), rng_.GetGen());
 
     std::vector<Operation> ops;
     ops.reserve(data.operations.size());
@@ -170,12 +175,12 @@ void Generator::CreateEdges(
     std::iota(numeration.begin(), numeration.end(), 0);
     while (cnt_new_deps != 0) {
         cnt_new_deps = 0;
-        std::shuffle(numeration.begin(), numeration.end(), rng.GetGen());
+        std::shuffle(numeration.begin(), numeration.end(), rng_.GetGen());
         for (size_t master_op_id : numeration) {
             for (size_t slave_op_id : numeration) {
                 // мы можем соединить операции
                 if (CanEdgeBeCreated(master_op_id, slave_op_id, effective_intervals, data) &&
-                    rng.GetBool(params.edge_create_prob)) {
+                    rng_.GetBool(params.edge_create_prob)) {
                     ++cnt_new_deps;
                     data.operations[master_op_id].AddDepended(data.operations[slave_op_id].id());
                     data.operations[slave_op_id].AddDependency(data.operations[master_op_id].id());
@@ -186,11 +191,13 @@ void Generator::CreateEdges(
                         data.operations[slave_op_id].SetWorkPtr(
                             data.operations[master_op_id].ptr_to_work());
                     }
-                    // обновляем время начала работы для работы по добавленной операции
+                    // обновляем время начала работы для работы по добавленной
+                    // операции
                     data.operations[master_op_id].ptr_to_work()->start_time_ =
                         std::min(data.operations[master_op_id].ptr_to_work()->start_time_,
                                  effective_intervals[slave_op_id].second.start());
-                    // обновляем директивный срок для работы по добавленной операции
+                    // обновляем директивный срок для работы по добавленной
+                    // операции
                     data.operations[master_op_id].ptr_to_work()->directive_ =
                         std::max(data.operations[master_op_id].ptr_to_work()->directive_,
                                  effective_intervals[slave_op_id].second.end());
@@ -201,6 +208,7 @@ void Generator::CreateEdges(
         }
     }
 
-    std::sort(data.operations.begin(), data.operations.end(),
-              [&](const Operation& a, const Operation& b) { return a.id() < b.id(); });
+    std::sort(
+        data.operations.begin(), data.operations.end(),
+        [&](const Operation& first, const Operation& second) { return first.id() < second.id(); });
 }

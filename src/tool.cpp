@@ -3,31 +3,34 @@
 Tool::Tool(const std::set<TimeInterval> shedule) : shedule_(shedule) {}
 Tool::Tool(std::initializer_list<TimeInterval>&& shedule) : shedule_(shedule) {}
 
-bool Tool::CanStartWork(const Operation& operation, TimePoint stamp, Duration span) {
+std::pair<bool, Duration> Tool::CanStartWork(const Operation& operation, TimePoint stamp, Duration span) {
     auto it = GetStartIterator(stamp);
     if (it == shedule_.end()) {
-        return false;
+        return {false, Duration(0)};
     }
-
-    // вот это была полная шляпа, пересекались интервалы
-    /*if (work_process_.back().Intersects({stamp, stamp})) {
-        return false;
-    }*/
 
     if (IntersectsWithWorkProc(stamp)) {
-        return false;
+        return {false, Duration(0)};
     }
 
+    Duration time(0);
     if (operation.stoppable()) {
-        Duration time{0};
+        Duration total_time(0);
         while (it != shedule_.end() && time < span) {
             time += it->GetTimeSpan(stamp);
+            total_time += it->GetTimeSpan(stamp);
+            if (time < span) {
+                total_time += std::next(it)->start() - it->end();
+            }
             ++it;
             stamp = it->start();
         }
-        return time >= span;
-    }
-    return it->GetTimeSpan(stamp) >= span;
+        return {time >= span, total_time};
+    } 
+    time = it->GetTimeSpan(stamp);
+    return {time >= span, time};
+    
+    
 }
 
 void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
@@ -61,13 +64,17 @@ bool Tool::IntersectsWithWorkProc(TimePoint stamp) const {
         if (interval.start() < last.end()) {
             return true;
         }
+
+        if (last.end() <= interval.start()) {
+            return false;
+        }
     }
 
-    for (const auto& i : work_process_) {
+    /*for (const auto& i : work_process_) {
         if (i.Intersects(interval)) {
             return true;
         }
-    }
+    }*/
 
     return false;
 }

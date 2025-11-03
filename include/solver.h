@@ -2,19 +2,24 @@
 #include <algorithm>
 #include <concepts>
 #include <deque>
-#include <iostream>
 #include <unordered_map>
 
-#include "generator.h"
 #include "problem_data.h"
-#include "operationFront.h"
+
+template <typename T>
+concept CanSort = requires(T obj, const ProblemData& data, IdsVec& front,
+                           const IdsSet& tools) {
+    { obj.SortFront(data, front, tools) } -> std::same_as<void>;
+};
 
 struct DummySorter {
-    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {}
+    void SortFront(const ProblemData& data, IdsVec& front,
+                   const IdsSet& tools) {}
 };
 
 struct DirectiveTimeSorter {
-    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
+    void SortFront(const ProblemData& data, IdsVec& front,
+                   const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].ptr_to_work()->directive() <
                    data.operations[b].ptr_to_work()->directive();
@@ -23,15 +28,18 @@ struct DirectiveTimeSorter {
 };
 
 struct StoppableSorter {
-    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
+    void SortFront(const ProblemData& data, IdsVec& front,
+                   const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return data.operations[a].stoppable() > data.operations[b].stoppable();
+            return data.operations[a].stoppable() >
+                   data.operations[b].stoppable();
         });
     }
 };
 
 struct RoundRobinSorter {
-    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools) {
+    void SortFront(const ProblemData& data, IdsVec& front,
+                   const IdsSet& tools) {
         if (works_q.empty()) {
             for (auto work : data.works) {
                 works_q.push_back(work->id());
@@ -53,9 +61,7 @@ struct RoundRobinSorter {
     }
 
     std::deque<size_t> works_q;
-    
 };
-
 
 class Solver {
 public:
@@ -66,33 +72,34 @@ public:
         gena_ = RandomGenerator(seed);
         TimePoint current_time;
         std::set<TimePoint> timestamps = GetStartTimes(data);
-        OperationFront<Sorter> front(data.operations);
+        Sorter sorter;
 
         while (!timestamps.empty()) {
-            IdsSet R;
-            
+            IdsSet possible_tools;
+            IdsVec front;
             current_time = *timestamps.begin();
             timestamps.erase(timestamps.begin());
 
             // вот тут по идее надо по-умному собирать фронт на основе
             // зависимостей хранящихся в операциях, но я хлебушек и не знаю
-            /*for (const auto& operation : data.operations) {
+            for (const auto& operation : data.operations) {
                 if (operation.CanBeAppointed(current_time)) {
-                    F.push_back(operation.id());
+                    front.push_back(operation.id());
                 }
-            }*/
+            }
 
-            //std::shuffle(F.begin(), F.end(), gena_.GetGen());
+            // std::shuffle(F.begin(), F.end(), gena_.GetGen());
 
-            //сортировку нужно переделать
-            front.sort(data, R);
-            //sorter.SortFront(data, F, R);
+            std::shuffle(front.begin(), front.end(), gena_.GetGen());
+            sorter.SortFront(data, front, possible_tools);
             //  сборка возможных исполнителей
-            for (size_t oper : front.front()) {
+            for (size_t oper : front) {
                 for (size_t i : data.operations[oper].possible_tools()) {
-                    if (data.tools[i].CanStartWork(data.operations[oper], current_time,
-                                                   data.times_matrix[oper][i])) {
-                        R.insert(i);
+                    if (data.tools[i]
+                            .CanStartWork(data.operations[oper], current_time,
+                                          data.times_matrix[oper][i])
+                            .first) {
+                        possible_tools.insert(i);
                     }
                 }
             }
@@ -100,8 +107,7 @@ public:
             // назначение
             // вот здесь надо не первый попавшийся инструмент использовать
             // а для каждой операции в текущем фронте искать самый оптимальный
-            std::optional<size_t> delOper = std::nullopt;
-            for (size_t oper : front.front()) {
+            for (size_t oper : front) {
                 auto& operation = data.operations[oper];
                 if (!operation.CanBeAppointed(current_time)) {
                     continue;
@@ -109,31 +115,24 @@ public:
 
                 size_t best_tool_id = INT64_MAX;
                 Duration best_duration = Duration(INT64_MAX);
-                for (size_t r : R) {
+                for (size_t r : possible_tools) {
+                    auto result = data.tools[r].CanStartWork(
+                        operation, current_time, data.times_matrix[oper][r]);
                     if (operation.possible_tools().contains(r) &&
-                        data.tools[r].CanStartWork(operation, current_time,
-                                                   data.times_matrix[oper][r])) {
-                        if (data.times_matrix[oper][r] < best_duration) {
-                            best_duration = data.times_matrix[oper][r];
+                        result.first) {
+                        if (result.second < best_duration) {
+                            best_duration = result.second;
                             best_tool_id = r;
                         }
                     }
                 }
-                if (best_tool_id == INT64_MAX) {
-                    continue;
+                if (best_tool_id != INT64_MAX) {
+                    data.tools[best_tool_id].Appoint(
+                        operation, current_time,
+                        data.times_matrix[oper][best_tool_id], data.operations);
+                    timestamps.insert(operation.GetStEndTimes().second);
+                    possible_tools.erase(best_tool_id);
                 }
-
-                data.tools[best_tool_id].Appoint(operation, current_time,
-                                                 data.times_matrix[oper][best_tool_id],
-                                                 data.operations);
-                timestamps.insert(operation.GetStEndTimes().second);
-                R.erase(best_tool_id);
-                //front.erase(oper);
-                delOper = oper;
-                break;
-            }
-            if(delOper.has_value()) {
-                front.erase(delOper.value());
             }
         }
     }

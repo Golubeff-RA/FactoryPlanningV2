@@ -6,7 +6,7 @@ class Tool {
 public:
     Tool(const std::set<TimeInterval> shedule);
     Tool(std::initializer_list<TimeInterval>&& shedule);
-    bool CanStartWork(const Operation& operation, TimePoint stamp,
+    std::pair<bool, Duration> CanStartWork(const Operation& operation, TimePoint stamp,
                       Duration span);
     void Appoint(Operation& operation, TimePoint stamp, Duration span,
                  std::vector<Operation>& all_operations);
