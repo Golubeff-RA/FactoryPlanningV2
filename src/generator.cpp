@@ -40,7 +40,8 @@ bool Generator::CanEdgeBeCreated(
     size_t master_id, size_t slave_id,
     const std::vector<std::pair<size_t, TimeInterval>>& effective_intervals,
     const ProblemData& data) {
-    if (data.operations[master_id].ptr_to_work() != data.operations[slave_id].ptr_to_work() &&
+    if (data.operations[master_id].ptr_to_work() !=
+            data.operations[slave_id].ptr_to_work() &&
         (!data.operations[slave_id].dependencies().empty() ||
          !data.operations[slave_id].depended().empty())) {
         return false;
@@ -75,7 +76,8 @@ bool Generator::CanEdgeBeCreated(
     }
 
     // операции эффективно выполняются на 1 исполнителе
-    if (effective_intervals[master_id].first == effective_intervals[slave_id].first) {
+    if (effective_intervals[master_id].first ==
+        effective_intervals[slave_id].first) {
         // эффективные интервалы выполнения пересекаются - нельзя
         if (effective_intervals[master_id].second.Intersects(
                 effective_intervals[slave_id].second)) {
@@ -96,12 +98,15 @@ void Generator::CreateShedules(GenerationParams params, ProblemData& data) {
     for (size_t i = 0; i < params.cnt_tools; ++i) {
         std::set<TimeInterval> shedule;
         TimePoint start_shed =
-            params.start + GetRandomDuration(params.spacer_dur.first, params.spacer_dur.second);
-        for (size_t j = 0; j < params.interval_per_tool; ++j) {
-            TimePoint end = start_shed + GetRandomDuration(params.interval_dur.first,
-                                                           params.interval_dur.second);
+            params.start + GetRandomDuration(params.spacer_dur.first,
+                                             params.spacer_dur.second);
+        for (size_t j = 0; j < params.interval_per_tool * 2; ++j) {
+            TimePoint end =
+                start_shed + GetRandomDuration(params.interval_dur.first,
+                                               params.interval_dur.second);
             shedule.insert(TimeInterval(start_shed, end));
-            start_shed = end + GetRandomDuration(params.spacer_dur.first, params.spacer_dur.second);
+            start_shed = end + GetRandomDuration(params.spacer_dur.first,
+                                                 params.spacer_dur.second);
         }
         data.tools.push_back(Tool(shedule));
     }
@@ -114,9 +119,14 @@ void Generator::CreateOperations(
     std::vector<std::pair<size_t, TimeInterval>>& effective_intervals) {
     for (size_t i = 0; i < data.tools.size(); ++i) {
         auto tool = data.tools[i];
+        size_t counter = 0;
         for (auto it = tool.GetShedule().begin();
-             it != std::prev(std::prev(tool.GetShedule().end())); ++it) {
-            auto interval = TimeInterval(it->start(), it->start() + (it->end() - it->start()));
+             it != tool.GetShedule().end() &&
+             counter < tool.GetShedule().size() / 2;
+             ++it, ++counter) {
+            auto interval = TimeInterval(
+                it->start(), it->start() + (it->end() - it->start()) / 5 * 4);
+
             if (rng_.GetBool(params.operation_create_prob)) {
                 Operation op{data.operations.size(), rng_.GetBool()};
                 // добавим возможных исполнителей
@@ -127,17 +137,25 @@ void Generator::CreateOperations(
                 }
                 op.AddPossibleTool(i);
 
-                data.works.push_back(WorkPtr(new Work{interval.start(), interval.end(), 0,
-                                                      (data.works.size() + 1) * kWorkIdMult}));
+                data.works.push_back(
+                    WorkPtr(new Work{interval.start(), interval.end(), 0,
+                                     (data.works.size() + 1) * kWorkIdMult}));
                 op.SetWorkPtr(data.works.back());
                 data.operations.push_back(op);
 
-                data.times_matrix.push_back(std::vector<Duration>(params.cnt_tools));
+                data.times_matrix.push_back(
+                    std::vector<Duration>(params.cnt_tools));
                 for (size_t j = 0; j < params.cnt_tools; ++j) {
                     if (op.possible_tools().contains(j)) {
-                        data.times_matrix.back()[j] = GetRandomDuration(
-                            ch::duration_cast<ch::seconds>(interval.GetTimeSpan()).count() + 1,
-                            ch::duration_cast<ch::seconds>(interval.GetTimeSpan()).count() * 2);
+                        data.times_matrix.back()[j] =
+                            GetRandomDuration(ch::duration_cast<ch::seconds>(
+                                                  interval.GetTimeSpan())
+                                                      .count() +
+                                                  2,
+                                              ch::duration_cast<ch::seconds>(
+                                                  interval.GetTimeSpan())
+                                                      .count() *
+                                                  4);
                     } else {
                         data.times_matrix.back()[j] = Duration(0);
                     }
@@ -158,10 +176,12 @@ void Generator::CreateOperations(
     std::vector<std::pair<size_t, TimeInterval>> eff;
     eff.reserve(data.operations.size());
 
-    std::transform(permutation.begin(), permutation.end(), std::back_inserter(ops),
+    std::transform(permutation.begin(), permutation.end(),
+                   std::back_inserter(ops),
                    [&](size_t idx) { return data.operations[idx]; });
 
-    std::transform(permutation.begin(), permutation.end(), std::back_inserter(eff),
+    std::transform(permutation.begin(), permutation.end(),
+                   std::back_inserter(eff),
                    [&](size_t idx) { return effective_intervals[idx]; });
     effective_intervals = eff;
 }
@@ -179,28 +199,37 @@ void Generator::CreateEdges(
         for (size_t master_op_id : numeration) {
             for (size_t slave_op_id : numeration) {
                 // мы можем соединить операции
-                if (CanEdgeBeCreated(master_op_id, slave_op_id, effective_intervals, data) &&
+                if (CanEdgeBeCreated(master_op_id, slave_op_id,
+                                     effective_intervals, data) &&
                     rng_.GetBool(params.edge_create_prob)) {
                     ++cnt_new_deps;
-                    data.operations[master_op_id].AddDepended(data.operations[slave_op_id].id());
-                    data.operations[slave_op_id].AddDependency(data.operations[master_op_id].id());
+                    data.operations[master_op_id].AddDepended(
+                        data.operations[slave_op_id].id());
+                    data.operations[slave_op_id].AddDependency(
+                        data.operations[master_op_id].id());
                     if (data.operations[slave_op_id].ptr_to_work() !=
                         data.operations[master_op_id].ptr_to_work()) {
-                        data.operations[slave_op_id].ptr_to_work()->DelOperation(
-                            data.operations[slave_op_id].id());
+                        data.operations[slave_op_id]
+                            .ptr_to_work()
+                            ->DelOperation(data.operations[slave_op_id].id());
                         data.operations[slave_op_id].SetWorkPtr(
                             data.operations[master_op_id].ptr_to_work());
                     }
                     // обновляем время начала работы для работы по добавленной
                     // операции
                     data.operations[master_op_id].ptr_to_work()->start_time_ =
-                        std::min(data.operations[master_op_id].ptr_to_work()->start_time_,
-                                 effective_intervals[slave_op_id].second.start());
+                        std::min(
+                            data.operations[master_op_id]
+                                .ptr_to_work()
+                                ->start_time_,
+                            effective_intervals[slave_op_id].second.start());
                     // обновляем директивный срок для работы по добавленной
                     // операции
-                    data.operations[master_op_id].ptr_to_work()->directive_ =
-                        std::max(data.operations[master_op_id].ptr_to_work()->directive_,
-                                 effective_intervals[slave_op_id].second.end());
+                    data.operations[master_op_id]
+                        .ptr_to_work()
+                        ->directive_ = std::max(
+                        data.operations[master_op_id].ptr_to_work()->directive_,
+                        effective_intervals[slave_op_id].second.end());
 
                     break;
                 }
@@ -208,7 +237,8 @@ void Generator::CreateEdges(
         }
     }
 
-    std::sort(
-        data.operations.begin(), data.operations.end(),
-        [&](const Operation& first, const Operation& second) { return first.id() < second.id(); });
+    std::sort(data.operations.begin(), data.operations.end(),
+              [&](const Operation& first, const Operation& second) {
+                  return first.id() < second.id();
+              });
 }

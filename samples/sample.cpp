@@ -11,6 +11,7 @@
 #include "scorer.h"
 #include "solution_checker.h"
 #include "solver.h"
+#include "sorters.h"
 
 using namespace std::chrono_literals;
 
@@ -34,11 +35,11 @@ void Pipeline(const ProblemData& generated_data, std::string out_filename) {
               << score.not_appointed_fine << std::endl;
 }
 
-constexpr size_t kCntTools = 50;
-constexpr size_t kCntIntervals = 30;
+constexpr size_t kCntTools = 10;
+constexpr size_t kCntIntervals = 100;
 constexpr std::pair<int, int> kSpacerDur = {100, 200};
 constexpr std::pair<int, int> kIntervalDur = {1000, 2000};
-constexpr double kOpGenProb = 0.4;
+constexpr double kOpGenProb = 0.5;
 constexpr double kAddEdgeProb = 0.5;
 constexpr double kAddToolProb = 0.5;
 constexpr int kSeedGenerator = 65783928;
@@ -56,5 +57,7 @@ int main() {
     Pipeline<DirectiveTimeSorter>(data, "solution_directive.json");
     Pipeline<StoppableSorter>(data, "solution_stoppable.json");
     Pipeline<RoundRobinSorter>(data, "solution_robin.json");
+    Pipeline<FineSorter>(data, "solution_finework.json");
+    Pipeline<DependedSorter>(data, "solution_depends.json");
     return 0;
 }

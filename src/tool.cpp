@@ -1,9 +1,13 @@
 #include "tool.h"
+
 #include <iostream>
+
 Tool::Tool(const std::set<TimeInterval> shedule) : shedule_(shedule) {}
 Tool::Tool(std::initializer_list<TimeInterval>&& shedule) : shedule_(shedule) {}
 
-std::pair<bool, Duration> Tool::CanStartWork(const Operation& operation, TimePoint stamp, Duration span) {
+std::pair<bool, Duration> Tool::CanStartWork(const Operation& operation,
+                                             TimePoint stamp,
+                                             Duration span) const {
     auto it = GetStartIterator(stamp);
     if (it == shedule_.end()) {
         return {false, Duration(0)};
@@ -26,11 +30,9 @@ std::pair<bool, Duration> Tool::CanStartWork(const Operation& operation, TimePoi
             stamp = it->start();
         }
         return {time >= span, total_time};
-    } 
+    }
     time = it->GetTimeSpan(stamp);
     return {time >= span, time};
-    
-    
 }
 
 void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
@@ -55,7 +57,9 @@ void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
 
 const std::set<TimeInterval>& Tool::GetShedule() const { return shedule_; }
 
-const std::set<NamedTimeInterval>& Tool::GetWorkProcess() const { return work_process_; }
+const std::set<NamedTimeInterval>& Tool::GetWorkProcess() const {
+    return work_process_;
+}
 
 bool Tool::IntersectsWithWorkProc(TimePoint stamp) const {
     NamedTimeInterval interval(666, stamp, stamp);
@@ -70,15 +74,10 @@ bool Tool::IntersectsWithWorkProc(TimePoint stamp) const {
         }
     }
 
-    /*for (const auto& i : work_process_) {
-        if (i.Intersects(interval)) {
-            return true;
-        }
-    }*/
-
     return false;
 }
-std::set<TimeInterval>::const_iterator Tool::GetStartIterator(TimePoint stamp) {
+std::set<TimeInterval>::const_iterator Tool::GetStartIterator(
+    TimePoint stamp) const {
     if (shedule_.empty()) {
         return shedule_.end();
     }

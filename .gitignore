@@ -4,3 +4,5 @@ build
 myenv
 docs
 .cache
+test_dir
+dataset_directory

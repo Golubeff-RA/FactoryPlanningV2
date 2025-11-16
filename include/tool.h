@@ -6,8 +6,9 @@ class Tool {
 public:
     Tool(const std::set<TimeInterval> shedule);
     Tool(std::initializer_list<TimeInterval>&& shedule);
-    std::pair<bool, Duration> CanStartWork(const Operation& operation, TimePoint stamp,
-                      Duration span);
+    std::pair<bool, Duration> CanStartWork(const Operation& operation,
+                                           TimePoint stamp,
+                                           Duration span) const;
     void Appoint(Operation& operation, TimePoint stamp, Duration span,
                  std::vector<Operation>& all_operations);
     const std::set<TimeInterval>& GetShedule() const;
@@ -16,6 +17,7 @@ public:
 private:
     std::set<TimeInterval> shedule_;
     std::set<NamedTimeInterval> work_process_;
-    std::set<TimeInterval>::const_iterator GetStartIterator(TimePoint stamp);
+    std::set<TimeInterval>::const_iterator GetStartIterator(
+        TimePoint stamp) const;
     bool IntersectsWithWorkProc(TimePoint timestamp) const;
 };
