@@ -4,7 +4,6 @@
 #include <queue>
 
 #include "basics/operation.h"
-#include "basics/problem_data.h"
 #include "defines.h"
 #include "solvers/sorters.h"
 

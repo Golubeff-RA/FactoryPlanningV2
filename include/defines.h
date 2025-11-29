@@ -16,27 +16,27 @@ constexpr TimePoint START_TIME_POINT{ch::time_point<ch::system_clock>::min()};
 
 class RandomGenerator {
 public:
-    explicit RandomGenerator(int seed) : gen(std::mt19937(seed)) {}
+    explicit RandomGenerator(int seed) : gen_(std::mt19937(seed)) {}
 
     int GetInt(int min, int max) {
         std::uniform_int_distribution<int> dist(min, max);
-        return dist(gen);
+        return dist(gen_);
     }
 
     double GetDouble(double min, double max) {
         std::uniform_real_distribution<double> dist(min, max);
-        return dist(gen);
+        return dist(gen_);
     }
 
     bool GetBool(double prob = 0.5) {
         std::bernoulli_distribution dist(prob);
-        return dist(gen);
+        return dist(gen_);
     }
 
-    std::mt19937 GetGen() { return gen; }
+    std::mt19937 GetGen() { return gen_; }
 
 private:
-    std::mt19937 gen;
+    std::mt19937 gen_;
 };
 
 struct GenerationParams {
