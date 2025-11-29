@@ -1,4 +1,4 @@
-#include "work.h"
+#include "basics/work.h"
 
 Work::Work(TimePoint start, TimePoint directive, double fine_coef, size_t id)
     : start_time_(start),

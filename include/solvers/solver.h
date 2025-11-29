@@ -3,32 +3,24 @@
 #include <functional>
 #include <queue>
 
+#include "basics/operation.h"
+#include "basics/problem_data.h"
 #include "defines.h"
-#include "operation.h"
-#include "problem_data.h"
-#include "sorters.h"
+#include "solvers/sorters.h"
 
 using TimePointsQueue = std::priority_queue<TimePoint, std::vector<TimePoint>,
                                             std::greater_equal<TimePoint>>;
 
 class Solver {
 public:
-    Solver() : gena_(185643241) {}
-
     template <CanSort Sorter>
-    void Solve(ProblemData& data, int seed = 185643241) {
-        gena_ = RandomGenerator(seed);
+    static void Solve(ProblemData& data, int seed = 185643241) {
+        RandomGenerator gena(seed);
         Sorter sorter;
         TimePoint current_time;
         TimePointsQueue timestamps(GetStartTimes(data));
 
-        IdsSet pre_front;
-        std::for_each(data.operations.begin(), data.operations.end(),
-                      [&](const Operation& op) {
-                          if (op.dependencies().empty()) {
-                              pre_front.insert(op.id());
-                          }
-                      });
+        IdsSet pre_front(CalcPreFront(data));
 
         while (!timestamps.empty()) {
             current_time = timestamps.top();
@@ -37,7 +29,7 @@ public:
             IdsVec front = FindFront(pre_front, data, current_time);
             IdsSet possible_tools =
                 FindPossibleTools(front, data, current_time);
-            std::shuffle(front.begin(), front.end(), gena_.GetGen());
+            std::shuffle(front.begin(), front.end(), gena.GetGen());
             sorter.SortFront(data, front, possible_tools);
 
             // назначение
@@ -48,7 +40,17 @@ public:
         }
     }
 
-private:
+protected:
+    static IdsSet CalcPreFront(const ProblemData& data) {
+        IdsSet pre_front;
+        std::for_each(data.operations.begin(), data.operations.end(),
+                      [&](const Operation& op) {
+                          if (op.dependencies().empty()) {
+                              pre_front.insert(op.id());
+                          }
+                      });
+        return pre_front;
+    }
     static TimePointsQueue GetStartTimes(const ProblemData& data);
 
     static IdsVec FindFront(const IdsSet& pre_front, const ProblemData& data,

@@ -14,3 +14,7 @@ add_executable(statistic_calculation ${CMAKE_SOURCE_DIR}/samples/statistic_calcu
 target_link_libraries(statistic_calculation ${PROJECT_NAME}LIB)
 target_include_directories(statistic_calculation PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+add_executable(multistep ${CMAKE_SOURCE_DIR}/samples/multistep.cpp)
+target_link_libraries(multistep ${PROJECT_NAME}LIB)
+target_include_directories(multistep PRIVATE ${CMAKE_SOURCE_DIR}/include)
+

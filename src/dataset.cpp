@@ -1,4 +1,4 @@
-#include "dataset.h"
+#include "utils/dataset.h"
 
 #include <array>
 #include <filesystem>
@@ -7,8 +7,8 @@
 #include <optional>
 
 #include "defines.h"
-#include "generator.h"
-#include "printer.h"
+#include "utils/generator.h"
+#include "utils/printer.h"
 constexpr std::array<int, 5> kSeeds{5465634, 465677, 465677, 5613244, 68123};
 constexpr std::array<size_t, 4> kToolsCnts{20, 35, 45, 50};
 constexpr std::array<size_t, 3> kIntervalsCnts{20, 25, 40};

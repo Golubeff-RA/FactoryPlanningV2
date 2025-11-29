@@ -1,8 +1,8 @@
-#include <scorer.h>
+#include <scorers/scorer.h>
 
-#include "operation.h"
-#include "problem_data.h"
-#include "work.h"
+#include "basics/operation.h"
+#include "basics/problem_data.h"
+#include "basics/work.h"
 
 std::pair<std::vector<WorkPtr>, std::vector<WorkPtr>> SeparateWorks(
     const ProblemData& data) {

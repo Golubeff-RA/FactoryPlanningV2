@@ -1,6 +1,7 @@
 #pragma once
-#include "operation.h"
-#include "time_interval.h"
+
+#include "basics/operation.h"
+#include "basics/time_interval.h"
 
 class Tool {
 public:
@@ -11,6 +12,8 @@ public:
                                            Duration span) const;
     void Appoint(Operation& operation, TimePoint stamp, Duration span,
                  std::vector<Operation>& all_operations);
+    // метод отката изменений в расписании (удаление операции)
+    void RemOpFromWorkProceess(size_t op_idx);
     const std::set<TimeInterval>& GetShedule() const;
     const std::set<NamedTimeInterval>& GetWorkProcess() const;
 

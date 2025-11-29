@@ -1,7 +1,11 @@
-#include "operation.h"
+#include "basics/operation.h"
+
+#include "defines.h"
 
 Operation::Operation(size_t id, bool stoppable)
-    : id_(id), stoppable_(stoppable) {}
+    : id_(id), stoppable_(stoppable) {
+    possible_starts_.push(START_TIME_POINT);
+}
 
 bool Operation::AddDependency(size_t id) {
     if (dependencies_.insert(id).second) {
@@ -44,8 +48,9 @@ void Operation::SetWorkPtr(WorkPtr work) {
 StEndTimes Operation::GetStEndTimes() const { return {start_time_, end_time_}; }
 
 bool Operation::CanBeAppointed(TimePoint stamp) const {
-    return !Appointed() && cnt_deps_ == 0 &&
-           stamp >= ptr_to_work_->start_time() && stamp >= possible_start_;
+    return !Appointed() && dependencies_.empty() &&
+           stamp >= ptr_to_work_->start_time() &&
+           stamp >= possible_starts_.top();
 }
 
 bool Operation::DelDependency(size_t dep_id, TimePoint dep_end) {
@@ -53,7 +58,7 @@ bool Operation::DelDependency(size_t dep_id, TimePoint dep_end) {
         return false;
     }
     --cnt_deps_;
-    possible_start_ = std::max(possible_start_, dep_end);
+    possible_starts_.push(std::max(possible_starts_.top(), dep_end));
     return true;
 }
 

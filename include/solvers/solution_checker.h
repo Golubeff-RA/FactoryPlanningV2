@@ -1,5 +1,5 @@
 #pragma once
-#include "problem_data.h"
+#include "basics/problem_data.h"
 
 class SolutionChecker {
 public:

@@ -1,9 +1,9 @@
-#include "concurent_grid.h"
+#include "utils/concurent_grid.h"
 
 #include <iostream>
 #include <thread>
 
-#include "printer.h"
+#include "utils/printer.h"
 
 int main() {
     ConcurentGrid<int> grid(3, 4, {"Alice", "Bob", "Charlie"},

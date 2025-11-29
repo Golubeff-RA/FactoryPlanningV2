@@ -1,4 +1,4 @@
-#include "generator.h"
+#include "utils/generator.h"
 
 #include <algorithm>
 #include <queue>

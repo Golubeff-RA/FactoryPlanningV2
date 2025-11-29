@@ -1,6 +1,4 @@
-#include "tool.h"
-
-#include <iostream>
+#include "basics/tool.h"
 
 Tool::Tool(const std::set<TimeInterval> shedule) : shedule_(shedule) {}
 Tool::Tool(std::initializer_list<TimeInterval>&& shedule) : shedule_(shedule) {}
@@ -43,9 +41,6 @@ void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
     while (time < span) {
         NamedTimeInterval interval{operation.id(), std::max(stamp, it->start()),
                                    std::min(it->end(), stamp + span - time)};
-        if (work_process_.contains(interval)) {
-            std::cout << "Warning! False appointment" << std::endl;
-        }
         work_process_.insert(interval);
         time += interval.GetTimeSpan();
         ++it;
@@ -98,4 +93,15 @@ std::set<TimeInterval>::const_iterator Tool::GetStartIterator(
     }
 
     return shedule_.end();
+}
+
+void Tool::RemOpFromWorkProceess(size_t op_idx) {
+    auto it = work_process_.begin();
+    while (it != work_process_.end()) {
+        if (it->operation_id() == op_idx) {
+            it = work_process_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }

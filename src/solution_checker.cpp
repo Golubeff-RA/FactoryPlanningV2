@@ -1,10 +1,10 @@
-#include "solution_checker.h"
+#include "solvers/solution_checker.h"
 
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
-#include "printer.h"
+#include "utils/printer.h"
 
 void SolutionChecker::CollisionDetector(const ProblemData& data) {
     for (size_t i = 0; i < data.tools.size(); ++i) {

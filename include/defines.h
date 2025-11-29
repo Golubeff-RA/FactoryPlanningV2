@@ -1,6 +1,5 @@
 #pragma once
 #include <chrono>
-#include <list>
 #include <random>
 #include <set>
 #include <utility>
@@ -13,7 +12,7 @@ using IdsSet = std::set<size_t>;
 using IdsVec = std::vector<std::size_t>;
 using StEndTimes = std::pair<TimePoint, TimePoint>;
 
-inline TimePoint START_TIME_POINT{ch::time_point<ch::system_clock>::min()};
+constexpr TimePoint START_TIME_POINT{ch::time_point<ch::system_clock>::min()};
 
 class RandomGenerator {
 public:
@@ -66,7 +65,8 @@ struct Score {
     double not_appointed_fine = 0;
 
     bool operator<(Score other) {
-        return std::abs(this->not_appointed_fine - other.not_appointed_fine) < 1e-10
+        return std::abs(this->not_appointed_fine - other.not_appointed_fine) <
+                       1e-10
                    ? this->appointed_fine < other.appointed_fine
                    : this->not_appointed_fine < other.not_appointed_fine;
     }

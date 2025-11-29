@@ -5,13 +5,13 @@
 #include <iostream>
 #include <string>
 
-#include "generator.h"
-#include "printer.h"
-#include "problem_data.h"
-#include "scorer.h"
-#include "solution_checker.h"
-#include "solver.h"
-#include "sorters.h"
+#include "basics/problem_data.h"
+#include "scorers/scorer.h"
+#include "solvers/solution_checker.h"
+#include "solvers/solver.h"
+#include "solvers/sorters.h"
+#include "utils/generator.h"
+#include "utils/printer.h"
 
 using namespace std::chrono_literals;
 
@@ -20,23 +20,21 @@ constexpr double kScoreMult = 100;
 
 template <CanSort Sorter>
 void Pipeline(const ProblemData& generated_data, std::string out_filename) {
-    Solver solver;
     std::ofstream out_file(out_filename);
     ProblemData data_copy = generated_data;
 
-    solver.Solve<Sorter>(data_copy, kSolverSeed);
+    Solver::Solve<Sorter>(data_copy, kSolverSeed);
     SolutionChecker::Check(data_copy);
 
     Score score = BasicScorer::CalcScore(data_copy, kScoreMult);
 
     Printer::PrintAnswerJSON(data_copy, score, out_file);
-    // Printer::PrintProblemData(data_copy, std::cout);
     std::cout << out_filename << ": " << score.appointed_fine << " || "
               << score.not_appointed_fine << std::endl;
 }
 
-constexpr size_t kCntTools = 10;
-constexpr size_t kCntIntervals = 100;
+constexpr size_t kCntTools = 20;
+constexpr size_t kCntIntervals = 20;
 constexpr std::pair<int, int> kSpacerDur = {100, 200};
 constexpr std::pair<int, int> kIntervalDur = {1000, 2000};
 constexpr double kOpGenProb = 0.5;

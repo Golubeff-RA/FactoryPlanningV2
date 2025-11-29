@@ -2,9 +2,9 @@
 #include <fstream>
 #include <string>
 
-#include "operation.h"
-#include "tool.h"
-#include "work.h"
+#include "basics/operation.h"
+#include "basics/tool.h"
+#include "basics/work.h"
 
 TimePoint ParseTimePoint(const std::string& str);
 
@@ -12,7 +12,7 @@ Duration ParseDuration(const std::string& str);
 
 class ProblemData {
 public:
-    ProblemData() {};
+    ProblemData(){};
     ProblemData(std::ifstream& input);
 
     std::vector<Tool> tools;

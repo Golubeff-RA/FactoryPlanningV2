@@ -1,6 +1,8 @@
 #pragma once
+#include <stack>
+
+#include "basics/work.h"
 #include "defines.h"
-#include "work.h"
 
 class Operation {
 public:
@@ -19,6 +21,19 @@ public:
     bool SetTimes(TimePoint start, TimePoint end, Duration span,
                   std::vector<Operation>& all_operations);
 
+    // cделает операцию снова не назначенной и добавит её к потомкам
+    void UnAppoint(std::vector<Operation>& all_operations) {
+        start_time_ = START_TIME_POINT;
+        end_time_ = START_TIME_POINT;
+
+        // мы назначили время выполнения операции, значит надо уменьшить число
+        // зависимостей для всех зависимых
+        for (size_t dep_id : depended_) {
+            all_operations[dep_id].AddDependency(id_);
+            all_operations[dep_id].possible_starts_.pop();
+        }
+    }
+
     void SetWorkPtr(WorkPtr work);
 
     StEndTimes GetStEndTimes() const;
@@ -31,20 +46,26 @@ public:
     const IdsSet& possible_tools()
         const;  // вернет список инструментов, которые могут выполнить операцию
     const IdsSet& dependencies() const;  // вернет список зависимостей
-    const IdsSet& depended() const;      // вернёт список зависимых
+    const IdsSet& depended() const;  // вернёт список зависимых
     size_t id() const;
     size_t cnt_deps() const;
     WorkPtr ptr_to_work() const;
 
+    TimePoint PossibleStart() const { return possible_starts_.top(); }
+
 private:
     WorkPtr ptr_to_work_ = nullptr;
-    size_t id_;              // номер операции
-    bool stoppable_;         // прерываемость
-    size_t cnt_deps_ = 0;    // число неназначенных родителей
-    IdsSet depended_;        // множество зависимых от неё
-    IdsSet dependencies_;    // множество зависимостей
+    size_t id_;       // номер операции
+    bool stoppable_;  // прерываемость
+    size_t cnt_deps_ = 0;  // число неназначенных родителей
+    IdsSet depended_;      // множество зависимых от неё
+    IdsSet dependencies_;  // множество зависимостей
     IdsSet possible_tools_;  // множество возможных исполнителей
     TimePoint start_time_ = START_TIME_POINT;
     TimePoint end_time_ = START_TIME_POINT;
-    TimePoint possible_start_ = START_TIME_POINT;  // момент возможного старта операции
+    std::stack<TimePoint> possible_starts_;
+    // TimePoint possible_start_ =
+    //     START_TIME_POINT;  // момент возможного старта операции
+
+    friend class Operation;
 };

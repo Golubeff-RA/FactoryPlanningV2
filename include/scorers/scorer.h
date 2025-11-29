@@ -1,7 +1,7 @@
 #pragma once
 #include <concepts>
 
-#include "problem_data.h"
+#include "basics/problem_data.h"
 template <typename T>
 concept CanScore =
     requires(const ProblemData& data, double not_appointed_coef) {

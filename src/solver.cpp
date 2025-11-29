@@ -1,4 +1,4 @@
-#include "solver.h"
+#include "solvers/solver.h"
 
 #include "defines.h"
 

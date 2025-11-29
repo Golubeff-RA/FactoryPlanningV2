@@ -1,6 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "operation.h"
+#include "basics/operation.h"
+#include "basics/work.h"
+#include "defines.h"
+#include "solvers/solver.h"
+#include "solvers/sorters.h"
+#include "utils/generator.h"
+
 
 TEST_CASE("Operation creation") {
     Operation op{777, false};
@@ -64,4 +70,42 @@ TEST_CASE("Work and operation") {
     auto now = ch::system_clock::now();
     master_op.SetTimes(now, now, now - now, operations);
     CHECK(operations.back().cnt_deps() == 0);
+}
+
+TEST_CASE("Operation UnAppointment") {
+    WorkPtr work(
+        new Work(ch::system_clock::now(), ch::system_clock::now(), 100, 0));
+    std::vector<Operation> ops{Operation(0, true), Operation(1, true)};
+    ops[0].AddDepended(1);
+    ops[0].SetWorkPtr(work);
+    ops[1].AddDependency(0);
+    ops[1].SetWorkPtr(work);
+    CHECK(ops[1].dependencies().size() == 1);
+    CHECK(ops[0].depended().size() == 1);
+
+    auto now = ch::system_clock::now();
+    CHECK(ops[1].PossibleStart() == START_TIME_POINT);
+    ops[0].SetTimes(now, now, ch::system_clock::now() - START_TIME_POINT, ops);
+    CHECK(ops[0].Appointed());
+    CHECK(ops[1].PossibleStart() == now);
+    CHECK(ops[1].CanBeAppointed(ch::system_clock::now()));
+    ops[0].UnAppoint(ops);
+    CHECK(!ops[0].Appointed());
+    CHECK(!ops[1].CanBeAppointed(now));
+    CHECK(ops[1].PossibleStart() == START_TIME_POINT);
+}
+
+TEST_CASE("Advanced UnAppointment") {
+    Generator genadiy;
+    GenerationParams params{10,         10,          ch::system_clock::now(),
+                            {100, 200}, {500, 1000}, 0.5,
+                            0.5,        0.5,         132143};
+
+    ProblemData data(genadiy.Generate(params));
+    Solver::Solve<DummySorter>(data, 13212423);
+    for (auto& oper : data.operations) {
+        CHECK(oper.Appointed());
+        oper.UnAppoint(data.operations);
+        CHECK(!oper.Appointed());
+    }
 }

@@ -2,23 +2,22 @@
 #include <optional>
 #include <thread>
 
-#include "concurent_grid.h"
-#include "dataset.h"
-#include "printer.h"
-#include "problem_data.h"
-#include "scorer.h"
-#include "solution_checker.h"
-#include "solver.h"
-#include "sorters.h"
+#include "basics/problem_data.h"
+#include "scorers/scorer.h"
+#include "solvers/solution_checker.h"
+#include "solvers/solver.h"
+#include "solvers/sorters.h"
+#include "utils/concurent_grid.h"
+#include "utils/dataset.h"
+#include "utils/printer.h"
 
 constexpr int kSolverSeed = 1232412;
 constexpr double kScoreMult = 100;
 
 template <CanSort Sorter>
 double Pipeline(const ProblemData& data) {
-    Solver solver;
     ProblemData data_copy = data;
-    solver.Solve<Sorter>(data_copy, kSolverSeed);
+    Solver::Solve<Sorter>(data_copy, kSolverSeed);
     SolutionChecker::Check(data_copy);
     Score score = BasicScorer::CalcScore(data_copy, kScoreMult);
     return score.appointed_fine;
@@ -34,7 +33,6 @@ int main() {
     std::vector<std::thread> threads;
     for (int i = 0; i < 8; ++i) {
         threads.emplace_back([&]() {
-            Solver solver;
             ProblemData data;
             std::optional<std::string> name{"dummy"};
             while (name.has_value()) {
