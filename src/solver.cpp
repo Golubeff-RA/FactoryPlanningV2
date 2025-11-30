@@ -1,34 +1,31 @@
 #include "solvers/solver.h"
 
 #include "defines.h"
+#include "utils/count_set.h"
 
 TimePointsQueue Solver::GetStartTimes(const ProblemData& data) {
-    TimePointsQueue times;
-    std::set<TimePoint> times_set;
+    TimePointsQueue times_set;
     for (const auto& work : data.works) {
-        times_set.insert(work->start_time());
+        times_set.insert(work->StartTime());
     }
 
     for (const auto& tool : data.tools) {
         for (const auto& interval : tool.GetShedule()) {
-            times_set.insert(interval.start());
+            times_set.insert(interval.Start());
         }
     }
 
-    for (TimePoint point : times_set) {
-        times.push(point);
-    }
-
-    return times;
+    return times_set;
 }
 
-IdsVec Solver::FindFront(const IdsSet& pre_front, const ProblemData& data,
-                         TimePoint current_time) {
+IdsVec Solver::FindFront(const CountSet<size_t>& pre_front,
+                         const ProblemData& data, TimePoint current_time) {
     IdsVec front;
-    for (size_t oper : pre_front) {
+    for (auto it = pre_front.UniqueBegin(); it != pre_front.UniqueEnd(); ++it) {
+        size_t oper = *it;
         const Operation& operation = data.operations[oper];
         if (operation.CanBeAppointed(current_time)) {
-            front.push_back(operation.id());
+            front.push_back(operation.ID());
         }
     }
     return front;
@@ -38,7 +35,7 @@ IdsSet Solver::FindPossibleTools(const IdsVec& front, const ProblemData& data,
                                  TimePoint current_time) {
     IdsSet possible_tools;
     for (size_t oper : front) {
-        for (size_t i : data.operations[oper].possible_tools()) {
+        for (size_t i : data.operations[oper].PossibleTools()) {
             if (data.tools[i]
                     .CanStartWork(data.operations[oper], current_time,
                                   data.times_matrix[oper][i])
@@ -50,9 +47,11 @@ IdsSet Solver::FindPossibleTools(const IdsVec& front, const ProblemData& data,
     return possible_tools;
 }
 
-void Solver::Appointment(const IdsVec& front, IdsSet& pre_front,
-                         IdsSet& possible_tools, TimePoint current_time,
-                         ProblemData& data, TimePointsQueue& timestamps) {
+void Solver::AppointmentProcess(const IdsVec& front,
+                                CountSet<size_t>& pre_front,
+                                IdsSet& possible_tools, TimePoint current_time,
+                                ProblemData& data,
+                                TimePointsQueue& timestamps) {
     for (size_t oper : front) {
         auto& operation = data.operations[oper];
         if (!operation.CanBeAppointed(current_time)) {
@@ -64,7 +63,7 @@ void Solver::Appointment(const IdsVec& front, IdsSet& pre_front,
         for (size_t r : possible_tools) {
             auto result = data.tools[r].CanStartWork(
                 operation, current_time, data.times_matrix[oper][r]);
-            if (operation.possible_tools().contains(r) && result.first) {
+            if (operation.PossibleTools().contains(r) && result.first) {
                 if (result.second < best_duration) {
                     best_duration = result.second;
                     best_tool_id = r;
@@ -75,11 +74,12 @@ void Solver::Appointment(const IdsVec& front, IdsSet& pre_front,
             data.tools[best_tool_id].Appoint(
                 operation, current_time, data.times_matrix[oper][best_tool_id],
                 data.operations);
-            timestamps.push(operation.GetStEndTimes().second);
+            timestamps.insert(operation.GetStEndTimes().second);
             possible_tools.erase(best_tool_id);
-            pre_front.erase(oper);
-            pre_front.insert(operation.depended().begin(),
-                             operation.depended().end());
+            pre_front.EraseOne(oper);
+            for (size_t id : operation.Depended()) {
+                pre_front.Insert(id);
+            }
         }
     }
 }

@@ -8,15 +8,13 @@ constexpr int kDefaultSeed = 52;
 class Generator {
 public:
     Generator() : rng_(kDefaultSeed) {}
-    virtual ProblemData Generate(GenerationParams params);
+    ProblemData Generate(GenerationParams params);
 
 protected:
     Duration GetRandomDuration(int min, int max) {
         return Duration{ch::seconds{rng_.GetInt(min, max)}};
     }
 
-    // проверяет возможность установки связи между операциями master_id ->
-    // slave_id
     static bool CanEdgeBeCreated(
         size_t master_id, size_t slave_id,
         const std::vector<std::pair<size_t, TimeInterval>>& effective_intervals,

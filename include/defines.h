@@ -12,7 +12,7 @@ using IdsSet = std::set<size_t>;
 using IdsVec = std::vector<std::size_t>;
 using StEndTimes = std::pair<TimePoint, TimePoint>;
 
-constexpr TimePoint START_TIME_POINT{ch::time_point<ch::system_clock>::min()};
+constexpr TimePoint kStartTimePoint{ch::time_point<ch::system_clock>::min()};
 
 class RandomGenerator {
 public:

@@ -35,7 +35,7 @@ int Dataset::CreateDataset(const std::string& path_name, size_t size) {
         GenerationParams params{
             kToolsCnts[rand_gena.GetInt(0, kToolsCnts.size() - 1)],
             kIntervalsCnts[rand_gena.GetInt(0, kIntervalsCnts.size() - 1)],
-            START_TIME_POINT,
+            kStartTimePoint,
             kSpacerLens[rand_gena.GetInt(0, kSpacerLens.size() - 1)],
             kIntervalLens[rand_gena.GetInt(0, kIntervalLens.size() - 1)],
             kOpCreateProbs[rand_gena.GetInt(0, kOpCreateProbs.size() - 1)],

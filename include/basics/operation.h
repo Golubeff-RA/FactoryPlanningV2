@@ -23,8 +23,8 @@ public:
 
     // cделает операцию снова не назначенной и добавит её к потомкам
     void UnAppoint(std::vector<Operation>& all_operations) {
-        start_time_ = START_TIME_POINT;
-        end_time_ = START_TIME_POINT;
+        start_time_ = kStartTimePoint;
+        end_time_ = kStartTimePoint;
 
         // мы назначили время выполнения операции, значит надо уменьшить число
         // зависимостей для всех зависимых
@@ -42,14 +42,14 @@ public:
 
     bool DelDependency(size_t dep_id, TimePoint dep_end);
 
-    bool stoppable() const;
-    const IdsSet& possible_tools()
+    bool Stoppable() const;
+    const IdsSet& PossibleTools()
         const;  // вернет список инструментов, которые могут выполнить операцию
-    const IdsSet& dependencies() const;  // вернет список зависимостей
-    const IdsSet& depended() const;  // вернёт список зависимых
-    size_t id() const;
-    size_t cnt_deps() const;
-    WorkPtr ptr_to_work() const;
+    const IdsSet& Dependencies() const;  // вернет список зависимостей
+    const IdsSet& Depended() const;  // вернёт список зависимых
+    size_t ID() const;
+    size_t CntDeps() const;
+    WorkPtr PtrToWork() const;
 
     TimePoint PossibleStart() const { return possible_starts_.top(); }
 
@@ -61,8 +61,8 @@ private:
     IdsSet depended_;      // множество зависимых от неё
     IdsSet dependencies_;  // множество зависимостей
     IdsSet possible_tools_;  // множество возможных исполнителей
-    TimePoint start_time_ = START_TIME_POINT;
-    TimePoint end_time_ = START_TIME_POINT;
+    TimePoint start_time_ = kStartTimePoint;
+    TimePoint end_time_ = kStartTimePoint;
     std::stack<TimePoint> possible_starts_;
     // TimePoint possible_start_ =
     //     START_TIME_POINT;  // момент возможного старта операции

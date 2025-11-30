@@ -33,15 +33,15 @@ void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
     for (const auto& tool : data.tools) {
         out << "i";
         for (const auto& interval : tool.GetShedule()) {
-            out << '(' << TimePointToStr(interval.start()) << ' '
-                << TimePointToStr(interval.end()) << ") ";
+            out << '(' << TimePointToStr(interval.Start()) << ' '
+                << TimePointToStr(interval.End()) << ") ";
         }
         out << '\n';
     }
 
     out << "OPERATIONS\n" << data.operations.size() << std::endl;
     for (const auto& op : data.operations) {
-        out << op.stoppable() << ' ';
+        out << op.Stoppable() << ' ';
     }
 
     out << "\nTIMES\n";
@@ -54,21 +54,21 @@ void Printer::PrintProblemData(const ProblemData& data, std::ostream& out) {
 
     for (const auto& work : data.works) {
         size_t cnt_edges = 0;
-        for (size_t op_id : work->operation_ids()) {
-            cnt_edges += data.operations[op_id].cnt_deps();
+        for (size_t op_id : work->OperationIDs()) {
+            cnt_edges += data.operations[op_id].CntDeps();
         }
 
         out << "\nwork\n"
-            << TimePointToStr(work->start_time()) << ' '
-            << TimePointToStr(work->directive()) << ' ' << work->fine_coef()
-            << ' ' << work->id() << ' ' << cnt_edges << ' '
-            << work->operation_ids().size() << std::endl;
-        for (size_t op_id : work->operation_ids()) {
+            << TimePointToStr(work->StartTime()) << ' '
+            << TimePointToStr(work->Directive()) << ' ' << work->FineCoef()
+            << ' ' << work->ID() << ' ' << cnt_edges << ' '
+            << work->OperationIDs().size() << std::endl;
+        for (size_t op_id : work->OperationIDs()) {
             out << op_id << ' ';
         }
         out << std::endl;
-        for (size_t op_id : work->operation_ids()) {
-            for (size_t dep_id : data.operations[op_id].depended()) {
+        for (size_t op_id : work->OperationIDs()) {
+            for (size_t dep_id : data.operations[op_id].Depended()) {
                 out << op_id << ' ' << dep_id << std::endl;
             }
         }
@@ -79,9 +79,9 @@ void Printer::PrintGants(const ProblemData& data, std::ostream& out) {
     for (size_t idx = 0; idx < data.tools.size(); ++idx) {
         out << idx << ") \n";
         for (const auto& interval : data.tools[idx].GetWorkProcess()) {
-            out << "(" << interval.operation_id() << ", "
-                << TimePointToStr(interval.start()) << ", "
-                << TimePointToStr(interval.end()) << ")\n";
+            out << "(" << interval.OperationID() << ", "
+                << TimePointToStr(interval.Start()) << ", "
+                << TimePointToStr(interval.End()) << ")\n";
         }
         out << '\n';
     }
@@ -91,8 +91,8 @@ void Printer::PrintShedules(const ProblemData& data, std::ostream& out) {
     for (size_t idx = 0; idx < data.tools.size(); ++idx) {
         out << idx << ")\n";
         for (const auto& interval : data.tools[idx].GetShedule()) {
-            out << "(" << TimePointToStr(interval.start()) << ", "
-                << TimePointToStr(interval.end()) << ")\n";
+            out << "(" << TimePointToStr(interval.Start()) << ", "
+                << TimePointToStr(interval.End()) << ")\n";
         }
         out << '\n';
     }
@@ -100,7 +100,7 @@ void Printer::PrintShedules(const ProblemData& data, std::ostream& out) {
 
 void Printer::PrintOperations(const ProblemData& data, std::ostream& out) {
     for (const auto& operation : data.operations) {
-        out << operation.id() << ") " << operation.stoppable()
+        out << operation.ID() << ") " << operation.Stoppable()
             << " start: " << TimePointToStr(operation.GetStEndTimes().first)
             << " end: " << (TimePointToStr(operation.GetStEndTimes().second))
             << " Appointed: " << operation.Appointed() << "\n";
@@ -109,10 +109,10 @@ void Printer::PrintOperations(const ProblemData& data, std::ostream& out) {
 
 void Printer::PrintWorks(const ProblemData& data, std::ostream& out) {
     for (const auto& work : data.works) {
-        out << "id: " << work->id() << " start: " << work->start_time()
-            << " directive: " << work->directive()
-            << " fine: " << work->fine_coef() << " operations: ";
-        for (size_t op_id : work->operation_ids()) {
+        out << "id: " << work->ID() << " start: " << work->StartTime()
+            << " directive: " << work->Directive()
+            << " fine: " << work->FineCoef() << " operations: ";
+        for (size_t op_id : work->OperationIDs()) {
             out << op_id << " ";
         }
         out << std::endl;
@@ -123,17 +123,17 @@ Json ToolToJson(const Tool& tool, const ProblemData& data, size_t id) {
     Json works_json = Json::array();
     Json shedule_json = Json::array();
     for (const auto& work_interval : tool.GetWorkProcess()) {
-        auto op_id = work_interval.operation_id();
-        auto wo_id = data.operations[op_id].ptr_to_work()->id();
+        auto op_id = work_interval.OperationID();
+        auto wo_id = data.operations[op_id].PtrToWork()->ID();
         works_json.push_back({{"work", wo_id},
                               {"operation", op_id},
-                              {"start", TimePointToStr(work_interval.start())},
-                              {"end", TimePointToStr(work_interval.end())}});
+                              {"start", TimePointToStr(work_interval.Start())},
+                              {"end", TimePointToStr(work_interval.End())}});
     }
 
     for (const auto& interval : tool.GetShedule()) {
-        shedule_json.push_back({{"start", TimePointToStr(interval.start())},
-                                {"end", TimePointToStr(interval.end())}});
+        shedule_json.push_back({{"start", TimePointToStr(interval.Start())},
+                                {"end", TimePointToStr(interval.End())}});
     }
 
     return {
@@ -161,21 +161,21 @@ void Printer::PrintAnswerJSON(const ProblemData& data, Score score,
 
     for (const auto& oper : data.operations) {
         answer["operations"].push_back(
-            {{"id", oper.id()},
-             {"stoppable", oper.stoppable()},
+            {{"id", oper.ID()},
+             {"stoppable", oper.Stoppable()},
              {"appointed", oper.Appointed()},
-             {"depended", IdsSetToJson(oper.depended())},
+             {"depended", IdsSetToJson(oper.Depended())},
              {"start", TimePointToStr(oper.GetStEndTimes().first)},
              {"end", TimePointToStr(oper.GetStEndTimes().second)}});
     }
 
     for (const auto& work : data.works) {
         answer["works"].push_back(
-            {{"id", work->id()},
-             {"fine_coef", work->fine_coef()},
-             {"start_time", TimePointToStr(work->start_time())},
-             {"directive", TimePointToStr(work->directive())},
-             {"operations", IdsSetToJson(work->operation_ids())}});
+            {{"id", work->ID()},
+             {"fine_coef", work->FineCoef()},
+             {"start_time", TimePointToStr(work->StartTime())},
+             {"directive", TimePointToStr(work->Directive())},
+             {"operations", IdsSetToJson(work->OperationIDs())}});
     }
     out << answer.dump(4);
 }

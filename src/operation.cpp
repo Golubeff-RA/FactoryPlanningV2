@@ -4,7 +4,7 @@
 
 Operation::Operation(size_t id, bool stoppable)
     : id_(id), stoppable_(stoppable) {
-    possible_starts_.push(START_TIME_POINT);
+    possible_starts_.push(kStartTimePoint);
 }
 
 bool Operation::AddDependency(size_t id) {
@@ -24,7 +24,7 @@ bool Operation::AddPossibleTool(size_t id) {
 bool Operation::HasDependencies() { return cnt_deps_ != 0; }
 
 bool Operation::Appointed() const {
-    return start_time_ != START_TIME_POINT && end_time_ != START_TIME_POINT;
+    return start_time_ != kStartTimePoint && end_time_ != kStartTimePoint;
 }
 
 bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
@@ -42,14 +42,14 @@ bool Operation::SetTimes(TimePoint start, TimePoint end, Duration span,
 
 void Operation::SetWorkPtr(WorkPtr work) {
     ptr_to_work_ = work;
-    work->AddOperation(id());
+    work->AddOperation(ID());
 }
 
 StEndTimes Operation::GetStEndTimes() const { return {start_time_, end_time_}; }
 
 bool Operation::CanBeAppointed(TimePoint stamp) const {
     return !Appointed() && dependencies_.empty() &&
-           stamp >= ptr_to_work_->start_time() &&
+           stamp >= ptr_to_work_->StartTime() &&
            stamp >= possible_starts_.top();
 }
 
@@ -62,13 +62,13 @@ bool Operation::DelDependency(size_t dep_id, TimePoint dep_end) {
     return true;
 }
 
-bool Operation::stoppable() const { return stoppable_; }
+bool Operation::Stoppable() const { return stoppable_; }
 
-const IdsSet& Operation::possible_tools() const { return possible_tools_; }
-const IdsSet& Operation::dependencies() const { return dependencies_; }
-const IdsSet& Operation::depended() const { return depended_; }
+const IdsSet& Operation::PossibleTools() const { return possible_tools_; }
+const IdsSet& Operation::Dependencies() const { return dependencies_; }
+const IdsSet& Operation::Depended() const { return depended_; }
 
-size_t Operation::id() const { return id_; }
-size_t Operation::cnt_deps() const { return cnt_deps_; }
+size_t Operation::ID() const { return id_; }
+size_t Operation::CntDeps() const { return cnt_deps_; }
 
-WorkPtr Operation::ptr_to_work() const { return ptr_to_work_; }
+WorkPtr Operation::PtrToWork() const { return ptr_to_work_; }

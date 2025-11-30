@@ -21,8 +21,8 @@ struct DirectiveTimeSorter {
     void SortFront(const ProblemData& data, IdsVec& front,
                    const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return data.operations[a].ptr_to_work()->directive() <
-                   data.operations[b].ptr_to_work()->directive();
+            return data.operations[a].PtrToWork()->Directive() <
+                   data.operations[b].PtrToWork()->Directive();
         });
     }
 };
@@ -31,8 +31,8 @@ struct StoppableSorter {
     void SortFront(const ProblemData& data, IdsVec& front,
                    const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return data.operations[a].stoppable() >
-                   data.operations[b].stoppable();
+            return data.operations[a].Stoppable() >
+                   data.operations[b].Stoppable();
         });
     }
 };
@@ -41,8 +41,8 @@ struct FineSorter {
     void SortFront(const ProblemData& data, IdsVec& front,
                    const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return data.operations[a].ptr_to_work()->fine_coef() >
-                   data.operations[b].ptr_to_work()->fine_coef();
+            return data.operations[a].PtrToWork()->FineCoef() >
+                   data.operations[b].PtrToWork()->FineCoef();
         });
     }
 };
@@ -51,8 +51,8 @@ struct DependedSorter {
     void SortFront(const ProblemData& data, IdsVec& front,
                    const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return data.operations[a].depended().size() >
-                   data.operations[b].depended().size();
+            return data.operations[a].Depended().size() >
+                   data.operations[b].Depended().size();
         });
     }
 };
@@ -62,7 +62,7 @@ struct RoundRobinSorter {
                    const IdsSet& tools) {
         if (works_q.empty()) {
             for (auto work : data.works) {
-                works_q.push_back(work->id());
+                works_q.push_back(work->ID());
             }
         }
         std::unordered_map<size_t, size_t> position_map;
@@ -72,8 +72,8 @@ struct RoundRobinSorter {
         }
 
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
-            return position_map[data.operations[a].ptr_to_work()->id()] <
-                   position_map[data.operations[b].ptr_to_work()->id()];
+            return position_map[data.operations[a].PtrToWork()->ID()] <
+                   position_map[data.operations[b].PtrToWork()->ID()];
         });
 
         works_q.push_back(works_q.front());

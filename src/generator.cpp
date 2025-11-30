@@ -16,7 +16,7 @@ ProblemData Generator::Generate(GenerationParams params) {
 
     std::vector<WorkPtr> works_not_empty;
     for (auto& ptr : data.works) {
-        if (!ptr->operation_ids().empty()) {
+        if (!ptr->OperationIDs().empty()) {
             works_not_empty.push_back(ptr);
         }
     }
@@ -40,14 +40,14 @@ bool Generator::CanEdgeBeCreated(
     size_t master_id, size_t slave_id,
     const std::vector<std::pair<size_t, TimeInterval>>& effective_intervals,
     const ProblemData& data) {
-    if (data.operations[master_id].ptr_to_work() !=
-            data.operations[slave_id].ptr_to_work() &&
-        (!data.operations[slave_id].dependencies().empty() ||
-         !data.operations[slave_id].depended().empty())) {
+    if (data.operations[master_id].PtrToWork() !=
+            data.operations[slave_id].PtrToWork() &&
+        (!data.operations[slave_id].Dependencies().empty() ||
+         !data.operations[slave_id].Depended().empty())) {
         return false;
     }
-    if (data.operations[master_id].depended().contains(slave_id) ||
-        data.operations[slave_id].dependencies().contains(master_id)) {
+    if (data.operations[master_id].Depended().contains(slave_id) ||
+        data.operations[slave_id].Dependencies().contains(master_id)) {
         return false;
     }
     // саму с собой связывать тоже нельзя
@@ -67,7 +67,7 @@ bool Generator::CanEdgeBeCreated(
             return false;
         }
 
-        for (int neighbor : data.operations[current].depended()) {
+        for (int neighbor : data.operations[current].Depended()) {
             if (!visited[neighbor]) {
                 visited[neighbor] = true;
                 que.push(neighbor);
@@ -85,8 +85,8 @@ bool Generator::CanEdgeBeCreated(
         }
     } else {
         // slave эффективно начинается раньше master - нельзя
-        if (effective_intervals[master_id].second.start() >
-            effective_intervals[slave_id].second.start()) {
+        if (effective_intervals[master_id].second.Start() >
+            effective_intervals[slave_id].second.Start()) {
             return false;
         }
     }
@@ -125,7 +125,7 @@ void Generator::CreateOperations(
              counter < tool.GetShedule().size() / 2;
              ++it, ++counter) {
             auto interval = TimeInterval(
-                it->start(), it->start() + (it->end() - it->start()) / 5 * 4);
+                it->Start(), it->Start() + (it->End() - it->Start()) / 5 * 4);
 
             if (rng_.GetBool(params.operation_create_prob)) {
                 Operation op{data.operations.size(), rng_.GetBool()};
@@ -138,7 +138,7 @@ void Generator::CreateOperations(
                 op.AddPossibleTool(i);
 
                 data.works.push_back(
-                    WorkPtr(new Work{interval.start(), interval.end(), 0,
+                    WorkPtr(new Work{interval.Start(), interval.End(), 0,
                                      (data.works.size() + 1) * kWorkIdMult}));
                 op.SetWorkPtr(data.works.back());
                 data.operations.push_back(op);
@@ -146,7 +146,7 @@ void Generator::CreateOperations(
                 data.times_matrix.push_back(
                     std::vector<Duration>(params.cnt_tools));
                 for (size_t j = 0; j < params.cnt_tools; ++j) {
-                    if (op.possible_tools().contains(j)) {
+                    if (op.PossibleTools().contains(j)) {
                         data.times_matrix.back()[j] =
                             GetRandomDuration(ch::duration_cast<ch::seconds>(
                                                   interval.GetTimeSpan())
@@ -204,32 +204,30 @@ void Generator::CreateEdges(
                     rng_.GetBool(params.edge_create_prob)) {
                     ++cnt_new_deps;
                     data.operations[master_op_id].AddDepended(
-                        data.operations[slave_op_id].id());
+                        data.operations[slave_op_id].ID());
                     data.operations[slave_op_id].AddDependency(
-                        data.operations[master_op_id].id());
-                    if (data.operations[slave_op_id].ptr_to_work() !=
-                        data.operations[master_op_id].ptr_to_work()) {
-                        data.operations[slave_op_id]
-                            .ptr_to_work()
-                            ->DelOperation(data.operations[slave_op_id].id());
+                        data.operations[master_op_id].ID());
+                    if (data.operations[slave_op_id].PtrToWork() !=
+                        data.operations[master_op_id].PtrToWork()) {
+                        data.operations[slave_op_id].PtrToWork()->DelOperation(
+                            data.operations[slave_op_id].ID());
                         data.operations[slave_op_id].SetWorkPtr(
-                            data.operations[master_op_id].ptr_to_work());
+                            data.operations[master_op_id].PtrToWork());
                     }
                     // обновляем время начала работы для работы по добавленной
                     // операции
-                    data.operations[master_op_id].ptr_to_work()->start_time_ =
-                        std::min(
-                            data.operations[master_op_id]
-                                .ptr_to_work()
-                                ->start_time_,
-                            effective_intervals[slave_op_id].second.start());
+                    data.operations[master_op_id]
+                        .PtrToWork()
+                        ->start_time_ = std::min(
+                        data.operations[master_op_id].PtrToWork()->start_time_,
+                        effective_intervals[slave_op_id].second.Start());
                     // обновляем директивный срок для работы по добавленной
                     // операции
                     data.operations[master_op_id]
-                        .ptr_to_work()
+                        .PtrToWork()
                         ->directive_ = std::max(
-                        data.operations[master_op_id].ptr_to_work()->directive_,
-                        effective_intervals[slave_op_id].second.end());
+                        data.operations[master_op_id].PtrToWork()->directive_,
+                        effective_intervals[slave_op_id].second.End());
 
                     break;
                 }
@@ -239,6 +237,6 @@ void Generator::CreateEdges(
 
     std::sort(data.operations.begin(), data.operations.end(),
               [&](const Operation& first, const Operation& second) {
-                  return first.id() < second.id();
+                  return first.ID() < second.ID();
               });
 }

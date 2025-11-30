@@ -1,17 +1,11 @@
 #pragma once
-#include <limits.h>
 
 #include <algorithm>
 #include <cfloat>
 #include <cstddef>
-#include <deque>
-#include <iostream>
 
-#include "basics/operation.h"
 #include "basics/problem_data.h"
 #include "defines.h"
-#include "solvers/solver.h"
-#include "solvers/sorters.h"
 
 template <class T>
 concept CanScoreInter = requires(const ProblemData& data) {
@@ -22,9 +16,9 @@ struct SimpleScorer {
     static Score CalcScore(const ProblemData& data) {
         Score answer{0, 0};
         for (auto work : data.works) {
-            TimePoint last_op_end = START_TIME_POINT;
+            TimePoint last_op_end = kStartTimePoint;
             size_t not_appointed_ops = 0;
-            for (size_t idx : work->operation_ids()) {
+            for (size_t idx : work->OperationIDs()) {
                 last_op_end = std::max(
                     data.operations[idx].GetStEndTimes().second, last_op_end);
                 if (!data.operations[idx].Appointed()) {
@@ -32,18 +26,16 @@ struct SimpleScorer {
                 }
             }
             answer.appointed_fine +=
-                work->fine_coef() *
-                std::chrono::duration<double>((last_op_end - work->directive()))
+                work->FineCoef() *
+                std::chrono::duration<double>((last_op_end - work->Directive()))
                     .count();
-            answer.not_appointed_fine += work->fine_coef() * not_appointed_ops;
+            answer.not_appointed_fine += work->FineCoef() * not_appointed_ops;
         }
-        // std::cout << answer.appointed_fine << " " <<
-        // answer.not_appointed_fine
-        //           << std::endl;
         return answer;
     }
 };
 
+/*
 struct DataAndTimes {
     ProblemData data;
     TimePointsQueue timers;
@@ -85,8 +77,8 @@ public:
                     std::shuffle(front.begin(), front.end(), gena.GetGen());
 
                     sorter.SortFront(pack.data, front, possible_tools);
-                    Appointment(front, pack.pre_front, possible_tools,
-                                current_time, pack.data, pack.timers);
+                    AppointmentProcess(front, pack.pre_front, possible_tools,
+                                       current_time, pack.data, pack.timers);
 
                     for (size_t i = 0; i < vertex_degree; ++i) {
                         problem_datas.push_back(pack);
@@ -129,4 +121,4 @@ private:
         return std::all_of(data.operations.begin(), data.operations.end(),
                            [&](const Operation& op) { return op.Appointed(); });
     }
-};
+};*/

@@ -24,12 +24,12 @@ void SolutionChecker::TimeChecker(const ProblemData& data) {
     for (size_t i = 0; i < data.tools.size(); ++i) {
         const auto& tool = data.tools[i];
         for (const auto& in : tool.GetWorkProcess()) {
-            if (!appointed_times.contains(in.operation_id()) &&
-                data.operations[in.operation_id()].Appointed()) {
-                appointed_times[in.operation_id()] = {i, Duration(0)};
+            if (!appointed_times.contains(in.OperationID()) &&
+                data.operations[in.OperationID()].Appointed()) {
+                appointed_times[in.OperationID()] = {i, Duration(0)};
             }
 
-            appointed_times[in.operation_id()].second += in.GetTimeSpan();
+            appointed_times[in.OperationID()].second += in.GetTimeSpan();
         }
     }
 
@@ -54,7 +54,7 @@ void SolutionChecker::HappensBeforeChecker(const ProblemData& data) {
             continue;
         }
 
-        for (size_t child_id : operation.depended()) {
+        for (size_t child_id : operation.Depended()) {
             if (!data.operations[child_id].Appointed()) {
                 continue;
             }
@@ -63,7 +63,7 @@ void SolutionChecker::HappensBeforeChecker(const ProblemData& data) {
                 data.operations[child_id].GetStEndTimes().first) {
                 std::stringstream ss;
                 ss << "operation " << child_id
-                   << " appointed earlier than parent #" << operation.id();
+                   << " appointed earlier than parent #" << operation.ID();
                 throw std::runtime_error(ss.str());
             }
         }
@@ -76,7 +76,7 @@ void SolutionChecker::EarlyStartChecker(const ProblemData& data) {
             continue;
         }
         if (operation.GetStEndTimes().first <
-            operation.ptr_to_work()->start_time()) {
+            operation.PtrToWork()->StartTime()) {
             throw std::runtime_error(
                 "Opeartion starts earlier than her Work can");
         }

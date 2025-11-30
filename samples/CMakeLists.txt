@@ -18,3 +18,5 @@ add_executable(multistep ${CMAKE_SOURCE_DIR}/samples/multistep.cpp)
 target_link_libraries(multistep ${PROJECT_NAME}LIB)
 target_include_directories(multistep PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+add_executable(tree_of_changing ${CMAKE_SOURCE_DIR}/samples/change_tree.cpp)
+

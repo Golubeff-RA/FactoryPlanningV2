@@ -17,14 +17,14 @@ bool CheckToolDoThisOperation(const Tool& tool, size_t id) {
     return std::any_of(tool.GetWorkProcess().begin(),
                        tool.GetWorkProcess().end(),
                        [&](const NamedTimeInterval& interval) {
-                           return interval.operation_id() == id;
+                           return interval.OperationID() == id;
                        });
 }
 
 IdsSet GetWhatToolDo(const Tool& tool) {
     IdsSet answer;
     for (const auto& inter : tool.GetWorkProcess()) {
-        answer.insert(inter.operation_id());
+        answer.insert(inter.OperationID());
     }
     return answer;
 }

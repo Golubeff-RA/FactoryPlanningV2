@@ -4,11 +4,9 @@
 class TimeInterval {
 public:
     TimeInterval(TimePoint start, TimePoint end);
-
-    TimePoint start() const;
-
-    TimePoint end() const;
-    Duration GetTimeSpan(TimePoint stamp = START_TIME_POINT) const;
+    TimePoint Start() const;
+    TimePoint End() const;
+    Duration GetTimeSpan(TimePoint stamp = kStartTimePoint) const;
 
     bool Intersects(const TimeInterval& other) const;
     bool operator<(const TimeInterval& other) const;
@@ -17,14 +15,14 @@ public:
     bool operator!=(const TimeInterval& other) const;
 
 private:
-    TimePoint start_{START_TIME_POINT};
-    TimePoint end_{START_TIME_POINT};
+    TimePoint start_{kStartTimePoint};
+    TimePoint end_{kStartTimePoint};
 };
 
 class NamedTimeInterval : public TimeInterval {
 public:
     NamedTimeInterval(size_t operation_id, TimePoint start, TimePoint end);
-    size_t operation_id() const;
+    size_t OperationID() const;
 
 private:
     size_t operation_id_;

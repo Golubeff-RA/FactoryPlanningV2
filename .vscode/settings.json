@@ -6,11 +6,11 @@
   "[c]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
-  "clangd.arguments": [
-    "--clang-tidy"
-  ],
   "clangd.fallbackFlags": [
     "-std=c++23"
   ],
-  "clang-format.style": "file"
+  "clangd.path": "clangd",
+  "clangd.arguments": [
+    "--clang-tidy",
+  ],
 }

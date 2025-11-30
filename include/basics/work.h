@@ -7,15 +7,15 @@ class Work {
 public:
     Work(TimePoint start, TimePoint directive, double fine_coef, size_t id);
 
-    TimePoint start_time() const;
+    TimePoint StartTime() const;
 
-    TimePoint directive() const;
+    TimePoint Directive() const;
 
-    double fine_coef() const;
+    double FineCoef() const;
 
-    size_t id() const;
+    size_t ID() const;
 
-    const IdsSet& operation_ids() const;
+    const IdsSet& OperationIDs() const;
 
     bool AddOperation(size_t id);
 

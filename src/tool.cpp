@@ -16,16 +16,16 @@ std::pair<bool, Duration> Tool::CanStartWork(const Operation& operation,
     }
 
     Duration time(0);
-    if (operation.stoppable()) {
+    if (operation.Stoppable()) {
         Duration total_time(0);
         while (it != shedule_.end() && time < span) {
             time += it->GetTimeSpan(stamp);
             total_time += it->GetTimeSpan(stamp);
             if (time < span) {
-                total_time += std::next(it)->start() - it->end();
+                total_time += std::next(it)->Start() - it->End();
             }
             ++it;
-            stamp = it->start();
+            stamp = it->Start();
         }
         return {time >= span, total_time};
     }
@@ -39,14 +39,14 @@ void Tool::Appoint(Operation& operation, TimePoint stamp, Duration span,
     auto it = GetStartIterator(stamp);
     TimePoint start_time = stamp;
     while (time < span) {
-        NamedTimeInterval interval{operation.id(), std::max(stamp, it->start()),
-                                   std::min(it->end(), stamp + span - time)};
+        NamedTimeInterval interval{operation.ID(), std::max(stamp, it->Start()),
+                                   std::min(it->End(), stamp + span - time)};
         work_process_.insert(interval);
         time += interval.GetTimeSpan();
         ++it;
-        stamp = it->start();
+        stamp = it->Start();
     }
-    TimePoint end_time = std::prev(work_process_.end())->end();
+    TimePoint end_time = std::prev(work_process_.end())->End();
     operation.SetTimes(start_time, end_time, time, all_operations);
 }
 
@@ -60,11 +60,11 @@ bool Tool::IntersectsWithWorkProc(TimePoint stamp) const {
     NamedTimeInterval interval(666, stamp, stamp);
     if (!work_process_.empty()) {
         const auto& last = *work_process_.rbegin();
-        if (interval.start() < last.end()) {
+        if (interval.Start() < last.End()) {
             return true;
         }
 
-        if (last.end() <= interval.start()) {
+        if (last.End() <= interval.Start()) {
             return false;
         }
     }
@@ -80,15 +80,15 @@ std::set<TimeInterval>::const_iterator Tool::GetStartIterator(
     TimeInterval interval(stamp, stamp);
     auto it = shedule_.lower_bound(interval);
 
-    if (it == shedule_.begin() && it->start() > stamp) {
+    if (it == shedule_.begin() && it->Start() > stamp) {
         return shedule_.end();
     }
 
-    if (it == shedule_.end() || it->start() > stamp) {
+    if (it == shedule_.end() || it->Start() > stamp) {
         it = std::prev(it);
     }
 
-    if (stamp >= it->start() && stamp < it->end()) {
+    if (stamp >= it->Start() && stamp < it->End()) {
         return it;
     }
 
@@ -98,7 +98,7 @@ std::set<TimeInterval>::const_iterator Tool::GetStartIterator(
 void Tool::RemOpFromWorkProceess(size_t op_idx) {
     auto it = work_process_.begin();
     while (it != work_process_.end()) {
-        if (it->operation_id() == op_idx) {
+        if (it->OperationID() == op_idx) {
             it = work_process_.erase(it);
         } else {
             ++it;

@@ -49,7 +49,7 @@ ProblemData::ProblemData(std::ifstream& input) {
     }
 
     for (size_t i = 0; i < works.size(); ++i) {
-        for (size_t op_id : works[i]->operation_ids()) {
+        for (size_t op_id : works[i]->OperationIDs()) {
             operations[op_id].SetWorkPtr((works[i]));
         }
     }

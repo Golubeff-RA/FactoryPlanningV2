@@ -1,14 +1,17 @@
 #include "basics/time_interval.h"
 
+#include "defines.h"
+
+
 TimeInterval::TimeInterval(TimePoint start, TimePoint end)
     : start_(start), end_(end) {}
 
-TimePoint TimeInterval::start() const { return start_; }
+TimePoint TimeInterval::Start() const { return start_; }
 
-TimePoint TimeInterval::end() const { return end_; }
+TimePoint TimeInterval::End() const { return end_; }
 
 Duration TimeInterval::GetTimeSpan(TimePoint stamp) const {
-    if (stamp == START_TIME_POINT) {
+    if (stamp == kStartTimePoint) {
         return end_ - start_;
     }
 
@@ -39,4 +42,4 @@ NamedTimeInterval::NamedTimeInterval(size_t operation_id, TimePoint start,
                                      TimePoint end)
     : TimeInterval(start, end), operation_id_(operation_id) {}
 
-size_t NamedTimeInterval::operation_id() const { return operation_id_; }
+size_t NamedTimeInterval::OperationID() const { return operation_id_; }
