@@ -279,11 +279,171 @@ def main():
         if data:
             display_analysis(data)
             
+def create_individual_tool_gantt_chart(data):
+    """Создание детальных графиков Ганта для каждого инструмента на одной строке"""
+    
+    # Создаём маппинг операций к работам
+    operation_to_work = {}
+    for work in data['works']:
+        for operation_id in work['operations']:
+            operation_to_work[operation_id] = work['id']
+    
+    # Получаем уникальные инструменты
+    tools = sorted(data['tools'], key=lambda x: x['id'])
+    
+    if not tools:
+        st.warning("Нет данных об инструментах")
+        return
+    
+    st.subheader("Графики Ганта по инструментам")
+    
+    # Выбор режима отображения
+    view_mode = st.radio(
+        "Режим отображения:",
+        ["Выбрать инструмент", "Показать все инструменты"],
+        horizontal=True,
+        key="tool_view_mode"
+    )
+    
+    # Фильтрация инструментов
+    tools_to_display = tools
+    if view_mode == "Выбрать инструмент":
+        tool_ids = [f"Tool {tool['id']}" for tool in tools]
+        selected_tool_str = st.selectbox(
+            "Выберите инструмент:",
+            tool_ids,
+            key="single_tool_select"
+        )
+        selected_tool_id = int(selected_tool_str.replace("Tool ", ""))
+        tools_to_display = [tool for tool in tools if tool['id'] == selected_tool_id]
+    
+    for tool in tools_to_display:
+        tool_id = tool['id']
+        tool_gantt_data = []
+        
+        for schedule in tool.get('shedule', []):
+            tool_gantt_data.append({
+                'Tool': f'Tool {tool_id}',
+                'Operation': 'Расписание',
+                'Start': parse_datetime(schedule['start']),
+                'Finish': parse_datetime(schedule['end']),
+                'Work': 'Schedule',
+                'Color': 'black',
+                'Type': 'Schedule'
+            })
+        
+        for work_process in tool['work_process']:
+            operation_id = work_process['operation']
+            work_id = operation_to_work.get(operation_id, -1)
+                
+            start_time = parse_datetime(work_process['start'])
+            end_time = parse_datetime(work_process['end'])
+                
+            operation_info = next((op for op in data['operations'] if op['id'] == operation_id), None)
+                
+            if operation_info:
+                tool_gantt_data.append({
+                    'Tool': f'Tool {tool_id}',
+                    'Operation': f'Op {operation_id}',
+                    'Work': f'Work {work_id}',
+                    'Start': start_time,
+                    'Finish': end_time,
+                    'Duration (s)': (end_time - start_time).total_seconds(),
+                    'Appointed': 'Назначена' if operation_info['appointed'] else 'Не назначена',
+                    'Stoppable': 'Прерываемая' if operation_info['stoppable'] else 'Непрерываемая',
+                    'Operation_ID': operation_id
+                })
+        
+        if not tool_gantt_data:
+            st.info(f"Нет данных для отображения по инструменту Tool {tool_id}")
+            continue
+        
+        df_tool = pd.DataFrame(tool_gantt_data)
+        
+        fig = px.timeline(
+            df_tool,
+            x_start="Start",
+            x_end="Finish",
+            y="Tool",
+            color="Work",
+            hover_data=["Operation", "Duration (s)", "Appointed", "Stoppable"],
+            title=f"График Ганта: Инструмент {tool_id}",
+            height=200
+        )
+        
+        for trace in fig.data:
+            if 'Schedule' in trace.name or 'Расписание' in trace.name:
+                trace.opacity = 0.15
+                trace.marker = dict(color='lightgray')
+        
+        fig.update_layout(
+            xaxis_title="Время",
+            yaxis_title="Инструмент",
+            showlegend=True,
+            margin=dict(l=50, r=50, t=50, b=50),
+            yaxis=dict(
+                autorange='reversed'
+            )
+        )
+        
+        with st.expander(f"Инструмент {tool_id}", expanded=False):
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Дополнительная статистика по инструменту — УНИКАЛЬНЫЕ операции
+            unique_ops = set(wp['operation'] for wp in tool['work_process'])
+            unique_appointed_ops = set(
+                wp['operation'] for wp in tool['work_process']
+                if next((op for op in data['operations'] if op['id'] == wp['operation']), {}).get('appointed', False)
+            )
+            
+            total_duration = sum([
+                (parse_datetime(wp['end']) - parse_datetime(wp['start'])).total_seconds()
+                for wp in tool['work_process']
+            ])
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Операций", len(unique_ops))
+            with col2:
+                st.metric("Общая длительность", f"{total_duration/3600:.1f} ч")
+            
+            if st.checkbox("Показать детали по операциям", key=f"show_details_{tool_id}"):
+                detail_data = []
+                seen_ops = set()
+                
+                for work_process in tool['work_process']:
+                    op_id = work_process['operation']
+                    if op_id in seen_ops:
+                        continue
+                    seen_ops.add(op_id)
+                    
+                    op_info = next((op for op in data['operations'] if op['id'] == op_id), None)
+                    if op_info:
+                        op_duration = sum([
+                            (parse_datetime(wp['end']) - parse_datetime(wp['start'])).total_seconds()
+                            for wp in tool['work_process'] if wp['operation'] == op_id
+                        ])
+                        
+                        detail_data.append({
+                            'Операция': op_id,
+                            'Работа': operation_to_work.get(op_id, 'N/A'),
+                            'Длительность (сек)': op_duration,
+                            'Прерываемая': '✅ Да' if op_info['stoppable'] else '❌ Нет',
+                            'Этапов выполнения': len([wp for wp in tool['work_process'] if wp['operation'] == op_id])
+                        })
+                
+                if detail_data:
+                    detail_df = pd.DataFrame(detail_data).sort_values('Операция')
+                    st.dataframe(detail_df, use_container_width=True)
+
 def display_analysis(data):
     display_score(data)
     st.markdown("---")
     st.subheader("График Ганта выполнения операций")
     create_gantt_chart(data)
+    st.markdown("---")
+    create_individual_tool_gantt_chart(data)
     st.markdown("---")
     display_works_info(data)
     st.markdown("---")

@@ -1,6 +1,8 @@
 #pragma once
 #include <concepts>
 #include <deque>
+#include <functional>
+#include <queue>
 #include <unordered_map>
 
 #include "basics/problem_data.h"
@@ -13,13 +15,13 @@ concept CanSort = requires(T obj, const ProblemData& data, IdsVec& front,
 };
 
 struct DummySorter {
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {}
+    static void SortFront(const ProblemData& data, IdsVec& front,
+                          const IdsSet& tools) {}
 };
 
 struct DirectiveTimeSorter {
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {
+    static void SortFront(const ProblemData& data, IdsVec& front,
+                          const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].PtrToWork()->Directive() <
                    data.operations[b].PtrToWork()->Directive();
@@ -28,8 +30,8 @@ struct DirectiveTimeSorter {
 };
 
 struct StoppableSorter {
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {
+    static void SortFront(const ProblemData& data, IdsVec& front,
+                          const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].Stoppable() >
                    data.operations[b].Stoppable();
@@ -38,8 +40,8 @@ struct StoppableSorter {
 };
 
 struct FineSorter {
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {
+    static void SortFront(const ProblemData& data, IdsVec& front,
+                          const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].PtrToWork()->FineCoef() >
                    data.operations[b].PtrToWork()->FineCoef();
@@ -48,8 +50,8 @@ struct FineSorter {
 };
 
 struct DependedSorter {
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {
+    static void SortFront(const ProblemData& data, IdsVec& front,
+                          const IdsSet& tools) {
         std::sort(front.begin(), front.end(), [&](size_t a, size_t b) {
             return data.operations[a].Depended().size() >
                    data.operations[b].Depended().size();
@@ -81,4 +83,32 @@ struct RoundRobinSorter {
     }
 
     std::deque<size_t> works_q;
+};
+
+template <CanSort... Sorter>
+class SorterAggregator {
+private:
+    using SorterFunc =
+        std::function<void(const ProblemData&, IdsVec&, const IdsSet&)>;
+    std::queue<SorterFunc> queue_;
+
+public:
+    template <CanSort SorterOne>
+    void AddSorter() {
+        SorterOne sorter;
+        queue_.emplace(
+            [&](const ProblemData& data, IdsVec& front, const IdsSet& tools) {
+                sorter.SortFront(data, front, tools);
+            });
+    }
+
+    SorterAggregator() { (AddSorter<Sorter>(), ...); }
+
+    void SortFront(const ProblemData& data, IdsVec& front,
+                   const IdsSet& tools) {
+        auto curr_sorter = queue_.front();
+        queue_.pop();
+        curr_sorter(data, front, tools);
+        queue_.push(curr_sorter);
+    }
 };

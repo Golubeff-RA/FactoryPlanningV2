@@ -1,6 +1,6 @@
 #include "utils/dataset.h"
 
 int main() {
-    Dataset::CreateDataset("../../dataset_directory", 200);
+    Dataset::CreateBigDataset("../../dataset_directory_big");
     return 0;
 }

@@ -9,6 +9,7 @@
 class Dataset {
 public:
     static int CreateDataset(const std::string& path_name, size_t size);
+    static int CreateBigDataset(const std::string& root_path_name);
 
     Dataset(const std::string& folder_path,
             std::vector<std::string>& file_names);

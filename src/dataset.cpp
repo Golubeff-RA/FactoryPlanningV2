@@ -1,17 +1,21 @@
 #include "utils/dataset.h"
 
 #include <array>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
+#include <string>
 
+#include "basics/problem_data.h"
 #include "defines.h"
 #include "utils/generator.h"
 #include "utils/printer.h"
-constexpr std::array<int, 5> kSeeds{5465634, 465677, 465677, 5613244, 68123};
+constexpr std::array<int, 6> kSeeds{5465634, 465677, 465677,
+                                    5613244, 68123,  2349008};
 constexpr std::array<size_t, 4> kToolsCnts{20, 35, 45, 50};
-constexpr std::array<size_t, 3> kIntervalsCnts{20, 25, 40};
+constexpr std::array<size_t, 4> kIntervalsCnts{20, 25, 40, 70};
 constexpr std::array<double, 3> kOpCreateProbs{0.3, 0.45, 0.69};
 constexpr std::array<double, 3> kEdCreateProbs{0.3, 0.45, 0.69};
 constexpr std::array<double, 3> kToolAddiProbs{0.3, 0.45, 0.69};
@@ -55,6 +59,81 @@ int Dataset::CreateDataset(const std::string& path_name, size_t size) {
         std::filesystem::path file_path = path_name + "/" + filename;
         std::ofstream out_file(file_path);
         Printer::PrintProblemData(data, out_file);
+    }
+    return 0;
+}
+
+int Dataset::CreateBigDataset(const std::string& path_name) {
+    try {
+        std::filesystem::create_directories(path_name);
+    } catch (const std::filesystem::filesystem_error& ex) {
+        return -1;
+    }
+    Generator gena;
+
+    for (size_t tool_cnt : kToolsCnts) {
+        for (size_t int_cnt : kIntervalsCnts) {
+            std::string local_path = path_name + "/" +
+                                     std::to_string(tool_cnt) + "_" +
+                                     std::to_string(int_cnt);
+            try {
+                std::filesystem::create_directories(local_path);
+            } catch (const std::filesystem::filesystem_error& ex) {
+                return -1;
+            }
+
+            std::cout << "New path filling: " << "tools - " << tool_cnt
+                      << " intervals - " << int_cnt << std::endl;
+
+            for (auto op_prob : kOpCreateProbs) {
+                for (auto tool_prob : kToolAddiProbs) {
+                    for (auto edge_prob : kEdCreateProbs) {
+                        for (auto int_len : kIntervalLens) {
+                            for (auto space_len : kSpacerLens) {
+                                for (auto seed : kSeeds) {
+                                    GenerationParams params{
+                                        tool_cnt,
+                                        int_cnt,
+                                        std::chrono::system_clock::now(),
+                                        space_len,
+                                        int_len,
+                                        op_prob,
+                                        edge_prob,
+                                        tool_prob,
+                                        seed};
+
+                                    ProblemData data(gena.Generate(params));
+                                    std::string filename =
+                                        std::to_string(params.seed) + "_" +
+                                        std::to_string(params.cnt_tools) + "_" +
+                                        std::to_string(
+                                            params.interval_per_tool) +
+                                        "_" +
+                                        std::to_string(
+                                            params.operation_create_prob) +
+                                        "_" +
+                                        std::to_string(
+                                            params.edge_create_prob) +
+                                        "_" +
+                                        std::to_string(params.add_tool_prob) +
+                                        "_" +
+                                        std::to_string(
+                                            params.interval_dur.first) +
+                                        "_" +
+                                        std::to_string(
+                                            params.spacer_dur.first) +
+                                        "_" + ".txt";
+                                    std::string file_path =
+                                        local_path + "/" + filename;
+                                    std::ofstream out_file(file_path);
+                                    Printer::PrintProblemData(data, out_file);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     return 0;
 }

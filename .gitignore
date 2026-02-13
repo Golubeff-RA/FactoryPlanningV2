@@ -6,3 +6,5 @@ docs
 .cache
 test_dir
 dataset_directory
+dataset_directory_big
+dataset_*
