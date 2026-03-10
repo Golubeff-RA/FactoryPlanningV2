@@ -14,7 +14,6 @@
 #include "utils/generator.h"
 #include "utils/printer.h"
 
-
 using namespace std::chrono_literals;
 
 constexpr int kSolverSeed = 1232412;
@@ -35,8 +34,8 @@ void Pipeline(const ProblemData& generated_data, std::string out_filename) {
               << score.not_appointed_fine << std::endl;
 }
 
-constexpr size_t kCntTools = 20;
-constexpr size_t kCntIntervals = 20;
+constexpr size_t kCntTools = 5;
+constexpr size_t kCntIntervals = 5;
 constexpr std::pair<int, int> kSpacerDur = {100, 200};
 constexpr std::pair<int, int> kIntervalDur = {1000, 2000};
 constexpr double kOpGenProb = 0.5;
@@ -50,14 +49,18 @@ int main() {
         kCntTools,    kCntIntervals, ch::system_clock::now(),
         kSpacerDur,   kIntervalDur,  kOpGenProb,
         kAddEdgeProb, kAddToolProb,  kSeedGenerator};
+    std::ofstream out_file("micro_sample.txt");
     ProblemData data(gen.Generate(params));
+    Printer::PrintProblemData(data, out_file);
+    out_file.close();
     std::cout << "data created!\n";
-
-    Pipeline<DummySorter>(data, "solution_dummy.json");
-    Pipeline<DirectiveTimeSorter>(data, "solution_directive.json");
-    Pipeline<StoppableSorter>(data, "solution_stoppable.json");
-    Pipeline<RoundRobinSorter>(data, "solution_robin.json");
-    Pipeline<FineSorter>(data, "solution_finework.json");
-    Pipeline<DependedSorter>(data, "solution_depends.json");
+    /*
+        Pipeline<DummySorter>(data, "solution_dummy.json");
+        Pipeline<DirectiveTimeSorter>(data, "solution_directive.json");
+        Pipeline<StoppableSorter>(data, "solution_stoppable.json");
+        Pipeline<RoundRobinSorter>(data, "solution_robin.json");
+        Pipeline<FineSorter>(data, "solution_finework.json");
+        Pipeline<DependedSorter>(data, "solution_depends.json");
+    */
     return 0;
 }

@@ -1,12 +1,15 @@
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <ostream>
+#include <string>
 #include <thread>
 
 #include "basics/problem_data.h"
 #include "gangsta_multistep.h"
+#include "multistep_different_sorters.h"
 #include "multistep_solver.h"
 #include "scorers/scorer.h"
 #include "solvers/solution_checker.h"
@@ -52,7 +55,19 @@ double PipelineForMultistep(const ProblemData& data) {
     return score.appointed_fine;
 }
 
-int main() {
+template <size_t depth>
+double PipelineForAggregator(const ProblemData& data) {
+    ProblemData data_copy = data;
+    data_copy = MultiSorter::Solve<
+        SorterAggregator<DummySorter, DirectiveTimeSorter, StoppableSorter,
+                         FineSorter, DependedSorter>,
+        SimpleScorer>(data_copy, depth, kSolverSeedFirst);
+    SolutionChecker::Check(data_copy);
+    Score score = BasicScorer::CalcScore(data_copy, kScoreMult);
+    return score.appointed_fine;
+}
+
+void Pipeline() {
     std::vector<std::string> row_names;
     std::vector<std::string> col_names{
         "Dummy",          "Directive",     "Stoppable",      "Robin",
@@ -135,13 +150,6 @@ int main() {
                     table.Set(name.value(), "MDependent2_8",
                               PipelineForMultistep<DependedSorter, 2, 8>(data));
 
-                    table.Set(
-                        name.value(), "Aggregator",
-                        PipelineForMultistep<
-                            SorterAggregator<DummySorter, DirectiveTimeSorter,
-                                             StoppableSorter, FineSorter,
-                                             DependedSorter>,
-                            4, 8>(data));
                     std::cout << "\rProblem #" << std::setw(5)
                               << counter.fetch_add(1)
                               << " solution taked: " << std::setw(8)
@@ -160,5 +168,54 @@ int main() {
 
     std::ofstream out_file("dataset_table_50_70.csv");
     Printer::PrintGridCSV(table, out_file);
+}
+
+int main() {
+    std::string path = "../../dataset_directory_big/";
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        if (entry.is_directory()) {
+            std::cout << entry.path() << std::endl;
+            std::vector<std::string> row_names;
+            std::vector<std::string> col_names{"Aggregator"};
+            Dataset dataset(entry.path(), row_names);
+            ConcurentGrid<double> table(row_names.size(), col_names.size(),
+                                        row_names, col_names, 999999);
+            std::vector<std::thread> threads;
+            std::atomic<size_t> counter = 0;
+
+            for (int i = 0; i < 10; ++i) {
+                threads.emplace_back([&]() {
+                    ProblemData data;
+                    std::optional<std::string> name{"dummy"};
+                    while (name.has_value()) {
+                        name = dataset.GetNext(&data);
+                        if (name.has_value()) {
+                            auto start = std::chrono::system_clock::now();
+                            table.Set(name.value(), "Aggregator",
+                                      PipelineForAggregator<4>(data));
+                            std::cout
+                                << "\rProblem #" << std::setw(5)
+                                << counter.fetch_add(1)
+                                << " solution taked: " << std::setw(8)
+                                << std::chrono::duration_cast<
+                                       std::chrono::milliseconds>(
+                                       std::chrono::system_clock::now() - start)
+                                << std::flush;
+                        }
+                    }
+                });
+            }
+
+            for (auto& t : threads) {
+                t.join();
+            }
+
+            std::ofstream out_file("dataset_table_" +
+                                   entry.path().filename().string() +
+                                   "agg.csv");
+            Printer::PrintGridCSV(table, out_file);
+        }
+    }
+
     return 0;
 }

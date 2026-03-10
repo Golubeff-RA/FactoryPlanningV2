@@ -7,4 +7,4 @@ docs
 test_dir
 dataset_directory
 dataset_directory_big
-dataset_*
+csv_garbage

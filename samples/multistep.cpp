@@ -2,12 +2,14 @@
 
 #include "basics/problem_data.h"
 #include "gangsta_multistep.h"
+#include "multistep_different_sorters.h"
+#include "multistep_solver.h"
 #include "scorers/scorer.h"
 #include "solvers/solution_checker.h"
 #include "solvers/sorters.h"
 #include "utils/generator.h"
 
-constexpr size_t kCntTools = 100;
+constexpr size_t kCntTools = 50;
 constexpr size_t kCntIntervals = 50;
 constexpr std::pair<int, int> kSpacerDur = {100, 150};
 constexpr std::pair<int, int> kIntervalDur = {1000, 2000};
@@ -25,6 +27,7 @@ int main() {
 
     ProblemData data(gen.Generate(params));
     std::cout << "data created!\n";
+
     ProblemData data3 = GangstaMultistep::Solve<StoppableSorter, SimpleScorer>(
         data, 4, 5, 123432524);
     SolutionChecker::Check(data3);
@@ -32,10 +35,10 @@ int main() {
     std::cout << "Basic Multistep: " << score.appointed_fine << " || "
               << score.not_appointed_fine << '\n';
 
-    ProblemData data2 = GangstaMultistep::Solve<
+    ProblemData data2 = MultiSorter::Solve<
         SorterAggregator<DummySorter, DirectiveTimeSorter, StoppableSorter,
                          FineSorter, DependedSorter>,
-        SimpleScorer>(data, 4, 8, 123432524);
+        SimpleScorer>(data, 4, 123432524);
     SolutionChecker::Check(data2);
     score = BasicScorer::CalcScore(data2, 100);
     std::cout << "Cool Multistep: " << score.appointed_fine << " || "

@@ -64,7 +64,7 @@ void PrintVector(IdsVec vec) {
     std::cout << '|';
 }
 
-class GangstaMultistep : Solver {
+class GangstaMultistep : public Solver {
 public:
     template <CanSort OneStepSorter, CanScoreInter Scorer>
     static ProblemData Solve(const ProblemData& data, size_t max_depth,
@@ -152,7 +152,7 @@ public:
         return answer;
     }
 
-private:
+protected:
     template <typename T>
     static std::vector<T> ReverseStack(std::stack<T> stack) {
         std::vector<T> answer(stack.size());

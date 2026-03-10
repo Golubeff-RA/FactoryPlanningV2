@@ -2,6 +2,7 @@
 #include <concepts>
 #include <deque>
 #include <functional>
+#include <iostream>
 #include <queue>
 #include <unordered_map>
 
@@ -90,25 +91,24 @@ class SorterAggregator {
 private:
     using SorterFunc =
         std::function<void(const ProblemData&, IdsVec&, const IdsSet&)>;
-    std::queue<SorterFunc> queue_;
+    std::vector<SorterFunc> sorters_;
 
 public:
     template <CanSort SorterOne>
     void AddSorter() {
         SorterOne sorter;
-        queue_.emplace(
+        sorters_.push_back(
             [&](const ProblemData& data, IdsVec& front, const IdsSet& tools) {
                 sorter.SortFront(data, front, tools);
             });
     }
 
+    size_t Size() const { return sorters_.size(); }
+
     SorterAggregator() { (AddSorter<Sorter>(), ...); }
 
-    void SortFront(const ProblemData& data, IdsVec& front,
-                   const IdsSet& tools) {
-        auto curr_sorter = queue_.front();
-        queue_.pop();
-        curr_sorter(data, front, tools);
-        queue_.push(curr_sorter);
+    void SortFront(const ProblemData& data, IdsVec& front, const IdsSet& tools,
+                   size_t sorter_id = 0) {
+        sorters_[sorter_id](data, front, tools);
     }
 };
